@@ -162,14 +162,14 @@ class MaskerModel:
         data_format = "channels_first"
         inp = keras.layers.Input(self.input_shape)
         print(inp)
-        c = keras.layers.MaxPooling3D((2, 2, 2), data_format="channels_first")(inp)
+        c = keras.layers.MaxPooling3D((3, 3, 3), data_format="channels_first")(inp)
         print(c)
         
         conv0 = keras.layers.Conv3D(
                     4, 
-                    (15, 15, 15), 
+                    (8, 8, 8), 
                     padding='same', 
-                    strides=(6, 6, 6), 
+                    strides=(4, 4, 4), 
                     activation="relu",
                     data_format=data_format,
                     name = "contraction-0" ) 
@@ -186,7 +186,7 @@ class MaskerModel:
         c = conv1(c)
         print(c)
         
-        for i in range(2):
+        for i in range(5):
             steady = keras.layers.Conv3D(
                         256, 
                         ( 3, 3, 3),
