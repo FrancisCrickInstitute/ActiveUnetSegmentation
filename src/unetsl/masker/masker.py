@@ -32,14 +32,15 @@ def channelSummer( channel):
 
     def labelCount(y_true, y_pred):
         binned = backend.round(y_pred)
-        #values = backend.sum( backend.flatten( binned ), axis=0)
-        values = backend.sum(binned, axis=0) #samples
-        values = backend.sum(values, axis=1) #z
-        values = backend.sum(values, axis=1) #y
-        values = backend.sum(values, axis=1) #x
+        values = backend.sum( backend.flatten( binned ), axis=0)
+        totals = backend.sum( backend.flatten( y_true ), axis=0)
+        #values = backend.sum(binned, axis=0) #samples
+        #values = backend.sum(values, axis=1) #z
+        #values = backend.sum(values, axis=1) #y
+        #values = backend.sum(values, axis=1) #x
         
         
-        return values[channel]
+        return values[channel]/totals[channel]
     labelCount.__name__ = "%s%s"%(labelCount.__name__, channel)
     return labelCount
 
@@ -123,6 +124,10 @@ class MaskerModel:
         """
           Takes a list of images: [(n, c, z, y, x), ...] and returns it as a padded image
           n*len(images), c, z', y', x' where the new cnets are 
+          
+          Args:
+              img : expects a list so that multiple sizes of images can be 
+                    processed.
         """
         
         
@@ -276,21 +281,28 @@ class MaskerModel:
                         callbacks = [epochlog, batchlog]
                         )
             self.model.save("dog-tired.h5", include_optimizer=False)
-    def predictImages(self, image, crop=False):
+    def predictImages(self, image, restore=True):
         padded_img = self.getInputData([image])
         #pred = self.getOutputData(image).astype("uint8")
         pred = self.model.predict(padded_img)
-        #pred = padded_img
-        pred = pred
-        if crop:
+        if restore:
+            pred = numpy.kron(pred, numpy.ones((3, 3,3))) 
             f, c, z, y, x = pred.shape
             f0, c0, z0, y0, x0 = image.shape
-            dz = (z - z0)//2
-            dy = (y - y0)//2
-            dx = (x - x0)//2
-            pred = numpy.round(pred[:, :, dz : dz + z0, dy : dy + y0, dx : dx + x0]).astype("uint8")
-       
-        
+            print("o: ", image.shape, " p: ", pred.shape)
+            dz = (z - z0)
+            dy = (y - y0)
+            dx = (x - x0)
+            print(dz, dy, dx, "deltas")
+            print(z0, y0, x0, "origins")
+            pred = pred[:, :, 
+                    dz//2 : dz//2 + z0, 
+                    dy//2 : dy//2 + y0, 
+                    dx//2 : dx//2 + x0
+                ]
+            pred = numpy.round(pred).astype("uint8")
+            print(pred.shape, image.shape, "repeated")
+            pred = numpy.concatenate([pred[:, 0:1], image],  axis=1)
         #mask = (pred==numpy.max(pred, axis=1))*1
         #for i in range(c):
         #    pred[:, i] = pred[:, i]*factor
@@ -325,5 +337,6 @@ class MaskerModel:
             l.set_weights(w)
         #sys.exit(0)
         #self.model.set_weights(current)
-        
+    def loadModel(self, model_file):
+        self.model = keras.models.load_model(model_file)
     

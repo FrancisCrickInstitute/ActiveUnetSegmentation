@@ -32,11 +32,11 @@ def predict(model_file, img_file):
     img_file = pathlib.Path(img_file)
     
     mm = MaskerModel( (1, 384, 384, 384) )
-    mm.createModel()
-    mm.loadWeights(str(model_file))
+    
+    mm.loadModel(model_file)
     img_stack, tags = unetsl.data.loadImage(img_file)
     print(img_stack.shape)
-    pred = mm.predictImages(img_stack, crop = False)
+    pred = mm.predictImages(img_stack)
     unetsl.data.saveImage(
                 "pred-%s-%s"%(
                     model_file.name.replace(".h5", ""), 
