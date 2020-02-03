@@ -27,7 +27,8 @@ def train():
 @masker.command("predict")
 @click.argument("model_file")
 @click.argument("img_file")
-def predict(model_file, img_file):
+@click.argument("pred_file", default=None)
+def predict(model_file, img_file, pred_file):
     model_file = pathlib.Path(model_file)
     img_file = pathlib.Path(img_file)
     
@@ -37,15 +38,15 @@ def predict(model_file, img_file):
     img_stack, tags = unetsl.data.loadImage(img_file)
     print(img_stack.shape)
     pred = mm.predictImages(img_stack)
-    unetsl.data.saveImage(
-                "pred-%s-%s"%(
-                    model_file.name.replace(".h5", ""), 
+    if pred_file != None:
+        out_name = "pred-%s-%s"%(
+                    model_file.name.replace(".h5", ""),
                     img_file.name
-                    ),
-                pred, 
-                tags
-            )
-
+                    )
+    else:
+        out_name = pred_file
+    unetsl.data.saveImage( pred, out_name, tags)
+    
 
 
 def main():
