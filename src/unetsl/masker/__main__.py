@@ -38,7 +38,7 @@ def predict(model_file, img_file, pred_file):
     img_stack, tags = unetsl.data.loadImage(img_file)
     print(img_stack.shape)
     pred = mm.predictImages(img_stack)
-    if pred_file != None:
+    if pred_file == None:
         out_name = "pred-%s-%s"%(
                     model_file.name.replace(".h5", ""),
                     img_file.name )
