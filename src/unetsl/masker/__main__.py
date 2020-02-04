@@ -46,8 +46,18 @@ def predict(model_file, img_file, pred_file):
         out_name = pred_file
 
     unetsl.data.saveImage( out_name, pred, tags)
-    
 
+
+def lazyLoadImages( image_folder ):
+    """ 
+        Creates a generator from the image folder such that generating data 
+        doesn't require loading all of the images in memory at once.
+        
+        Args:
+            folder where images will be.
+    """
+    image_list = [  ]
+    
 @masker.command("inspect")
 def inspect(model_file):
     mm = MaskerModel( (1, 384, 384, 384))
@@ -55,6 +65,7 @@ def inspect(model_file):
     mm.model.summary()
     #if os.path.exists("dog-tired.h5"):
     #    mm.loadWeights("dog-tired.h5")
+    
     images = [ unetsl.data.loadImage(os.path.join("images", img)) for img in os.listdir("images")]
     labels = [ unetsl.data.loadImage(os.path.join("labels", img)) for img in os.listdir("labels")]
     img_stack = numpy.concatenate([row[0] for row in images], axis=0)

@@ -28,19 +28,22 @@ import sys
 
 import pathlib
 
+
+
 def channelSummer( channel):
 
     def labelCount(y_true, y_pred):
         binned = backend.round(y_pred)
-        values = backend.sum( backend.flatten( binned ), axis=0)
-        totals = backend.sum( backend.flatten( y_true ), axis=0)
+        values = backend.sum( backend.flatten( binned[ :, channel ] ), axis=0)
+        totals = backend.sum( backend.flatten( y_true[ :, channel ] ), axis=0)
+        
         #values = backend.sum(binned, axis=0) #samples
         #values = backend.sum(values, axis=1) #z
         #values = backend.sum(values, axis=1) #y
         #values = backend.sum(values, axis=1) #x
         
         
-        return values[channel]/totals[channel]
+        return values/totals
     labelCount.__name__ = "%s%s"%(labelCount.__name__, channel)
     return labelCount
 
