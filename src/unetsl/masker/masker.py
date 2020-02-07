@@ -145,23 +145,11 @@ class MaskerModel:
         
         total = []        
         for labelled_img in labelled_images:
-            #z0 = labelled_img.shape[-3]
-            #zn = z0%3
-            #y0 = labelled_img.shape[-2]
-            #yn = y0%3
-            #x0 = labelled_img.shape[-1]
-            #xn = x0%3
-
             labelled_img = unetsl.data.maxPool(self.getPaddedInput(labelled_img, cval=0), (3, 3, 3))
         
             background = 1*(labelled_img==1)
             border = 1*(labelled_img==0)
             foreground = 1 - background - border
-
-            #foreground = (1 - background)
-            #background = self.getPaddedInput((background), cval=0)
-            #foreground = self.getPaddedInput((foreground), cval=0)
-            #border = self.getPaddedInput(numpy.zeros(labelled_img.shape), cval=1)
         
             total.append(numpy.concatenate([background, foreground, border], axis=1))
         return numpy.concatenate(total, axis=0)
@@ -305,15 +293,10 @@ class MaskerModel:
                 ]
             pred = numpy.round(pred).astype("uint8")
             print(pred.shape, image.shape, "repeated")
-            pred = numpy.concatenate([pred[:, 0:1], image],  axis=1)
-        #mask = (pred==numpy.max(pred, axis=1))*1
-        #for i in range(c):
-        #    pred[:, i] = pred[:, i]*factor
-        #    factor = factor*2
-        #pred = numpy.sum(pred, axis=1, keepdims=True, dtype='float32')
+            mask = 1 - pred[:, 1:2]
+            pred = numpy.concatenate([mask, image],  axis=1)
         return pred.astype("float32")
-        #return mask.astype("uint8")
-        #return numpy.round(pred).astype("uint8")
+        
     def loadWeights(self, model_file):
         """
             Loads weights from an existing model file. If the model file and 
