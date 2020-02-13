@@ -344,24 +344,14 @@ def getEndPoints(skeleton):
     
     return numpy.where(points)
 
-
-def main():
+@click.command()
+@click.argument("prediction", type=click.Path(exists=True))
+@click.argument("destination", type=click.Path())
+def main(prediction, destination):
     
-    if len(sys.argv)!=3:
-        sys.exit(0)
     
-    #if os.path.exists(sys.argv[2]):
-    #    y = input("%s exists and could be overwritten proceed y/N"%sys.argv[2])
-    #    if y not in ["Y", "y", "yes", "Yes"]:
-    #        print("operation cancelled")
-    #        sys.exit(0)
-    
-    img, tags = unetsl.data.loadImage(sys.argv[1])
-    
-    #labelled images should only have 1 channel.
-    c1 = img[0]
-    
-    out = numpy.zeros((4, c1.shape[0], c1.shape[1], c1.shape[2]), dtype="uint8") 
+    img, tags = unetsl.data.loadImage(prediction)
+    out = numpy.zeros((4, *img.shape[-3:]), dtype="uint8") 
     count = 0
     
     skeletons = []
@@ -371,6 +361,7 @@ def main():
     total=0
     fix_total = 0
     simple_fix_total = 0
+    c1 = img[0,0]
     for s_no, slic in enumerate(c1):
         """
             This loop runs as though the 'current' slice is the next slice.
@@ -465,7 +456,7 @@ def main():
         
     print("total: ", total, " broken ends to start with. ",simple_fix_total, " after initial pass. ", fix_total, " after fixing.")
         
-    unetsl.data.saveImage(sys.argv[2], out)
+    unetsl.data.saveImage(destination, out.reshape((1, *out.shape)))
 
 def developingDistanceTransformWatershed():
     

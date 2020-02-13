@@ -27,7 +27,7 @@ def train():
 @masker.command("predict")
 @click.argument("model_file")
 @click.argument("img_file")
-@click.argument("pred_file", default=None)
+@click.argument("pred_file", default=None, required=False)
 def predict(model_file, img_file, pred_file):
     model_file = pathlib.Path(model_file)
     img_file = pathlib.Path(img_file)

@@ -95,7 +95,6 @@ class IndexedVolumeData:
             self.padding = [0, 10, 10]
         if normalize_samples is None:
             raise RequiredArgument("normalize_samples is a required argument")
-        #print("patches: ", patches)
         if stride is None:
             stride = patches[:]
         
@@ -283,10 +282,8 @@ class RotatedIndexedVolumeData(IndexedVolumeData):
         large_patch_generator = getDataGenerator(self.volume, self.labels, self.n_labels, self.indexes, self.rotated_patch_size, batch_size=batch_size, labeller = self.labeller, normalize_samples = self.normalize_samples)
         offset = [(np - p)//2 for np, p in zip(self.rotated_patch_size, self.patches)]
         angle_deg = self.angle*180/math.pi
-        #print("%s to %s"%(self.angle, angle_deg))
         for x_batch, y_batch in large_patch_generator:
             for sample_czyx in x_batch:
-                #print(self.volume.shape, self.labels.shape, sample_czyx.shape)
                 for channel_zyx in sample_czyx:
                     for slice_yx in channel_zyx:
                         slice_yx[:, :] = skimage.transform.rotate(slice_yx, angle_deg, preserve_range=True)
@@ -303,7 +300,6 @@ class RotatedIndexedVolumeData(IndexedVolumeData):
                               offset[2]:offset[2] + self.patches[2],
                               offset[3]:offset[3] + self.patches[3]
                               ]
-            #print(y_batch.shape)
             y_batch =y_batch[:, 
                               offset[0]:offset[0] + self.n_labels, 
                               offset[1]:offset[1] + self.patches[1],
@@ -375,7 +371,6 @@ class InfiniteGenerator:
             self.index = 0
         dex = self.indexes[self.index]
         self.index += 1
-        #print(dex, self.generators[dex])
         return self.generators[dex][1].__next__()
             
     
@@ -705,7 +700,6 @@ def getPaddedDataGenerator(xdata, ydata, n_labels, indexes, patch, batch_size=1,
                         index[2] + pad[1]:index[2] + pad[1] + patch[2],
                         index[3] + pad[2]:index[3] + pad[2] + patch[3]
                         ]
-            #print(xdata.shape, x.shape, patch[0])
             y = labeller(ydata[
                         0,
                         index[1] + pad[0]:index[1] + pad[0] + patch[1],
@@ -713,7 +707,7 @@ def getPaddedDataGenerator(xdata, ydata, n_labels, indexes, patch, batch_size=1,
                         index[3] + pad[2]:index[3] + pad[2] + patch[3]
                         ], n_labels)
             if(x.shape[-3:] != y.shape[-3:]):
-                print("borked!!")
+                print("geometry doesn't match! x %s, y %s"%(x.shape[-3:], y.shape[-3:]))
             xbatch.append(x)
             ybatch.append(y)
 
@@ -761,7 +755,6 @@ def getDataGenerator(xdata, ydata, n_labels, indexes, patch, batch_size=1, label
                         index[2]:index[2] + patch[2],
                         index[3]:index[3] + patch[3]
                         ]
-            #print(xdata.shape, x.shape, patch[0])
             y = labeller(ydata[
                         0,
                         index[1]:index[1] + patch[1],
@@ -769,7 +762,7 @@ def getDataGenerator(xdata, ydata, n_labels, indexes, patch, batch_size=1, label
                         index[3]:index[3] + patch[3]
                         ], n_labels)
             if(x.shape[-3:] != y.shape[-3:]):
-                print("borked!!")
+                print("geometry doesn't match! x %s, y %s"%(x.shape[-3:], y.shape[-3:]))
             xbatch.append(x)
             ybatch.append(y)
 
@@ -974,9 +967,7 @@ def shapeThatThing(data):
         higher dimension with the added axis of length 1.
         
     """
-    dims = len(data.shape)
-    print("shaping: ", data.shape)
-    
+    dims = len(data.shape)    
     if dims==2:
         #single slice -> 1,1,1,Y,X
         return numpy.array([[[data]]])
@@ -1087,7 +1078,7 @@ def splitIntoChannels(input_shape, image):
                         "Missmatched channels input (?, %s). actual shape: %s"%( input_shape, image.shape )
                     )
     else:
-        raise MalformedImageException("To split into Channels, img must have 5 dim. actual shape: %s"%image.shape )
+        raise MalformedImageException("To split into Channels, img must have 5 dim. actual shape: %s"%(image.shape, ) )
     return image
 
 
@@ -1127,7 +1118,6 @@ def getCropStride(stride, angle):
         new_stride[-2] = - sin*stride[-1] + cos*stride[-2]
 
     new_stride = [int(s + 0.5) for s in new_stride]
-    #print("in:", stride,"angle:", angle, "rotated stride:", new_stride)
     return new_stride
 
 
@@ -1194,7 +1184,6 @@ def getFilePairs(original_folder, segmentation_folder):
     
     n_skel = [(tuple(int(s) for s in grab.findall(n)), n) for n in segmentation_folder]
     n_skel.sort()
-    print(n_inp, n_skel)
     if len(n_inp)>len(n_skel):
         n_inp = n_inp[:len(n_skel)]
     
@@ -1230,7 +1219,6 @@ def getWeightedFileGroups(original_folder, segmentation_folder, weights_folder):
     n_ws = n_ws[:shortest]
     n_skel = n_skel[:shortest]
     pairs = list(zip([a[1] for a in n_inp], [b[1] for b in n_skel], [w[1] for w in n_ws]))
-    print(len(pairs) , " image pairs for training")
     return pairs
 
 
@@ -1250,7 +1238,6 @@ def getPairedDirectorySources(config, normalize_samples):
     if ROTATIONS in config:
         rotations = config[ROTATIONS]
     for img, seg in img_pairs:
-        print("file pair: ", img, seg)
         source_ = fileSources(img, seg, labeller, normalize_samples)
         sources += source_
         
@@ -1339,7 +1326,6 @@ def getDataSources(data_source_configs, normalize_samples):
         
     """
     sources = []
-    print(data_source_configs)
     for dsc in data_source_configs:
         source = SOURCE_DELEGATE[dsc[SOURCE_TYPE]](dsc, normalize_samples)
         sources += source
@@ -1368,9 +1354,7 @@ def getDataGenerators(data_sources,n_labels, patch_size, stride, batch_size, val
         #updateGeometry(self, n_labels, patches, stride=None, out_patches=None)
         source.updateGeometry(n_labels, patch_size, stride)
         source.generateIndexes();
-        v1, v2 = source.split(train_fraction);
-        print("train: ", v1) 
-        print("  validation: ", v2)                
+        v1, v2 = source.split(train_fraction)
         training_volumes.append(v1)
         validation_volumes.append(v2)
     

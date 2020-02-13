@@ -118,6 +118,8 @@ def weightedDiceLoss(y_exp, y_pred, sigma = 0.01):
     
     return -2*((K.sum(num) + sigma)/(K.sum(den) + sigma))
     
+def logMse(y_exp, p_pred):
+    return tensorflow.math.log( 1 + keras.losses.mse(y_exp, p_pred) )
 
 def categoricalCrossEntropy(y_exp, y_pred):
     epsilon = 1e-6
@@ -138,7 +140,8 @@ LOSS_FUNCTIONS = {
     "unetsl.model.jaccardIndexLoss": jaccardIndexLoss, 
     "keras.losses.hinge": keras.losses.hinge,
     "unetsl.model.categoricalCrossEntropy" : categoricalCrossEntropy,
-    "unetsl.model.weightedDiceLoss" : weightedDiceLoss
+    "unetsl.model.weightedDiceLoss" : weightedDiceLoss,
+    "unetsl.model.logMse" : logMse
     }
 
 

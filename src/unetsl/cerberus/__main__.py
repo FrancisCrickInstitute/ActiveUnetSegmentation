@@ -100,7 +100,7 @@ def trainCerberusModel(config_file, gpus, batch):
     tc = str(logger.file).replace(".txt", ".json")
     batch_logger = unetsl.model.BatchLog(model_output_file, model, filename = str(bfile))
     
-    click.echo("# training log %s \n#batch log %s \n#config log%s"%(e_filename, b_filename, tc))
+    click.echo("# training log %s \n#batch log %s \n#config log %s"%(e_filename, b_filename, tc))
     
     cerberus_config.saveConfig(cfg, pathlib.Path(tc))
     

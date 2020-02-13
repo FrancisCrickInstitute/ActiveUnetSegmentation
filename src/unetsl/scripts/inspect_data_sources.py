@@ -6,7 +6,6 @@ import unetsl, unetsl.model, unetsl.data, unetsl.config
 from unetsl.data import VolumeViewer
 from matplotlib import pyplot
 from matplotlib.widgets import Slider
-import unetsl.cascade.model
 
 import sys
 import numpy
@@ -75,17 +74,10 @@ def displayModelOutput(model, source_configs, stride=None, normalize_samples = F
     #pyplot.ion()
     volumes = []
     DO_ALL = False
-    CASCADE_RESULT=False
     for source in sources:
         print(source)
                 
         n, dataGenerator = getDataGenerator(source, output_shape[0], input_shape, stride)
-        if CASCADE_RESULT:
-                dataGenerator = unetsl.cascade.cascadedGenerator(
-                        dataGenerator, 
-                        config[unetsl.POOLING_SHAPE], 
-                        len(model.output)
-                    )
                 
         print("n: ", n, " steps" )
         for i in range(n):
@@ -139,10 +131,7 @@ def showDataSources(config_file):
     source_configs = config[unetsl.DATA_SOURCES]
     
     input_shape = unetsl.model.getInputShape(model)
-    CASCADE_RESULT=False
-    if isinstance(model.output, list):
-        CASCADE_RESULT=True
-        levels = len(model.output)
+    
     output_shape = unetsl.model.getOutputShape(model)
     print("output shape: ",output_shape)
     n_labels = output_shape[0]
@@ -159,13 +148,6 @@ def showDataSources(config_file):
         print("patch_size", patch_size, "stride", stride)
         
         n, dataGenerator = getDataGenerator(source, n_labels, patch_size, stride)
-        if CASCADE_RESULT:
-                dataGenerator = unetsl.cascade.cascadedGenerator(
-                        dataGenerator, 
-                        config[unetsl.POOLING_SHAPE], 
-                        len(model.output)
-                    )
-                
         print("n: ", n, " steps" )
         for i in range(n):
             
