@@ -178,9 +178,10 @@ def saveModel(model, filepath):
 def loadModel(model_file):
     """
         Loads a model from the supplied model, includes custom objects that map
-        to local functinos.
+        to local functinos. Uses str( model_file ) so a pathlib.Path will work
+        here, even though keras broke that functionality.
+        
     """
-    print(model_file)
     custom_objects = {
             "weightedError": weightedError, 
             "sorensenDiceCoefLoss": sorensenDiceCoefLoss, 
@@ -190,7 +191,7 @@ def loadModel(model_file):
             "categoricalCrossEntropy": categoricalCrossEntropy,
             "weightedDiceLoss": weightedDiceLoss}
     
-    return load_model(model_file, custom_objects=custom_objects, compile=False)
+    return load_model(str(model_file), custom_objects=custom_objects, compile=False)
     
 
 def getInputShape(model):
