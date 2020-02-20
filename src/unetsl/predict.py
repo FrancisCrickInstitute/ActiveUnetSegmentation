@@ -123,12 +123,15 @@ class MultiChannelPredictor:
     
     
     def predict(self):
+        return self.predictImage(self.image);
+    
+    def predictImage(self, image):
         if len(self.reduction_types) < 1:
             self.reduction_types = guessOutputReductionTypes(self.model)
             
         return predictMultiChannelImage(
                 self.model, 
-                self.image, 
+                image, 
                 reduction_type = self.reduction_types, 
                 stride = self.stride, 
                 sample_normalize = self.sample_normalize, 

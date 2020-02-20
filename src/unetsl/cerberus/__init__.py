@@ -284,12 +284,13 @@ def createCerberusUnet3dModel(input_shape, pool_size=(2, 2, 2), depth=3,
     """
     Builds the 3D UNet Keras model and attached outputs defined in the head configs.
     
-    :param input_shape: Shape of the input data (n_chanels, x_size, y_size, z_size). The x, y, and z sizes must be
+    Args:
+        input_shape: Shape of the input data (n_chanels, x_size, y_size, z_size). The x, y, and z sizes must be
          divisible by the pool size to the power of the depth of the UNet, that is pool_size^depth.
-    :param pool_size: Pool size for the max pooling operations.
-    :param depth: indicates the depth of the U-shape for the model. An 
+         pool_size: Pool size for the max pooling operations.
+         depth: indicates the depth of the U-shape for the model. An 
         increase in depth corresponds to a pool/contracting level.
-    :return: Untrained 3D UNet Model
+    Return: Untrained 3D UNet Model with three outputs.
     """
 
     starting_model = unetsl.model.createUnet3dModel(

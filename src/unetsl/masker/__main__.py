@@ -35,17 +35,24 @@ def predict(model_file, img_file, pred_file):
     mm = MaskerModel( (1, 384, 384, 384) )
     
     mm.loadModel(model_file)
+        
+    
     img_stack, tags = unetsl.data.loadImage(img_file)
     print(img_stack.shape)
-    pred = mm.predictImages(img_stack)
-    if pred_file == None:
-        out_name = "pred-%s-%s"%(
-                    model_file.name.replace(".h5", ""),
-                    img_file.name )
-    else:
-        out_name = pred_file
-
-    unetsl.data.saveImage( out_name, pred, tags)
+    
+    
+    
+    for i in range(len(img_stack)):
+        pred = mm.predictImages(img_stack[i:i+1])
+        if pred_file == None:
+            out_name = "pred-%s-b%s-%s"%(
+                    model_file.name.replace(".h5", ""), 
+                    i,
+                    img_file.name
+                )
+        else:
+            out_name = pred_file
+        unetsl.data.saveImage( out_name, pred, tags)
 
 
 def lazyLoadImages( image_folder ):
