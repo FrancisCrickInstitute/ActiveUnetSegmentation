@@ -189,7 +189,8 @@ def loadModel(model_file):
             "dice_coefficient_loss":sorensenDiceCoefLoss, 
             "jaccardIndexLoss": jaccardIndexLoss,
             "categoricalCrossEntropy": categoricalCrossEntropy,
-            "weightedDiceLoss": weightedDiceLoss}
+            "weightedDiceLoss": weightedDiceLoss
+        }
     
     return load_model(str(model_file), custom_objects=custom_objects, compile=False)
     

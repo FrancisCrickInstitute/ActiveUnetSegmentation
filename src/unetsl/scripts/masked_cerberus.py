@@ -22,11 +22,13 @@ def guessShaper(key):
     
     return "upsample"
 
-def getCerberusPredictor(model, batch=True, gpus=2):
+def getCerberusPredictor(model, batch_size=1, gpus=1):
+    batch=True #no config.
+    
     config = {
             unetsl.predict.DEBUG : False,
             unetsl.NORMALIZE_SAMPLES: False,
-            unetsl.BATCH_SIZE : 4
+            unetsl.BATCH_SIZE : batch_size
         }
     output_map = unetsl.model.getOutputMap(model)
         
@@ -77,7 +79,10 @@ import time
 @click.argument("masker_file")
 @click.argument("cerberus_file")
 @click.argument("img_file")
-def predict(masker_file, cerberus_file, img_file):
+@click.option("--gpus", default=1, envvar="GPUS")
+@click.option("--batch_size", default=2, envvar="BATCH_SIZE")
+@click.option("--chunk_size", default=1, envvar="CHUNK_SIZE")
+def predict(masker_file, cerberus_file, img_file, gpus, batch_size, chunk_size):
     masker_file = pathlib.Path(masker_file)
     img_file = pathlib.Path(img_file)
     cerberus_file = pathlib.Path(cerberus_file)
@@ -88,22 +93,34 @@ def predict(masker_file, cerberus_file, img_file):
     img_stack, tags = unetsl.data.loadImage(img_file)
     
     
-    out_name = "pred-%s-%s-%s"%(
-            masker_file.name.replace(".h5", ""), 
-            cerberus_file.name.replace(".h5", ""),
-            img_file.name
-        )
+    
     stacks = []
     #for i in range(len(img_stack)):
-    cerb_predictor = getCerberusPredictor(unetsl.model.loadModel(cerberus_file))
-    for i in range(img_stack.shape[0]):
-        print(time.time(), i, "/", img_stack.shape[0])
-        pred = mm.predictImages(img_stack[i:i+1])
+    cerb_predictor = getCerberusPredictor(unetsl.model.loadModel(cerberus_file), batch_size=batch_size, gpus=gpus)
+    
+    start = time.time()
+    print(start, gpus, chunk_size, batch_size)
+    for i in range(0, img_stack.shape[0], chunk_size):
+        chunk = img_stack[i:i+chunk_size]
+        dots = "".join(["."]*chunk.shape[0])
+        print(dots, end=" ")
+        pred = mm.predictImages(img_stack[i:i+chunk_size])
         pred2, debug = cerb_predictor.predictImage(pred)
         stacks.append(pred2)
-    prediction = numpy.concatenate(stacks, axis=0)
-    unetsl.data.saveImage( out_name, prediction, tags)
-
+    with open("log.txt", 'a', encoding="UTF8") as fi:
+        fi.write("%s %s %s %s\n"%(gpus, chunk_size, batch_size, time.time()-start))
+    print(time.time() - start)
+    
+    for i in range(3):
+        prediction = numpy.concatenate([ slc[:, i:i+1] for slc in stacks], axis=0)
+        out_name = "pred-c%d-%s-%s-%s"%(
+                i,
+                masker_file.name.replace(".h5", ""), 
+                cerberus_file.name.replace(".h5", ""),
+                img_file.name
+            )
+        unetsl.data.saveImage( out_name, prediction, tags)
+    
     
 
 if __name__=="__main__":
