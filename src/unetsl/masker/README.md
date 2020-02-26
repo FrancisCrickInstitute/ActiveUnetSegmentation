@@ -25,4 +25,10 @@ size.
 
 ### Virtual Environment
 
-Create a virtualenv to 
+Create a virtualenv to install the model.
+
+## Results
+
+One thing I have notice about this problem is the "stationary" convolution
+blocks help determine if the network can learn the 
+

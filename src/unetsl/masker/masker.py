@@ -49,18 +49,19 @@ def channelSummer( channel):
 
 
 class EpochLog(callbacks.Callback):
-    def __init__(self):
+    def __init__(self, tag):
         super().__init__()
         self.written = 0
         self.first = True
-        self.file = "epoch-log.txt"
+        self.file = "epoch-log-%s.txt"%tag
+        
         with open(self.file, 'w', encoding="utf8") as lg:
             lg.write("#logging\n")
         
     def on_epoch_end(self, epoch, params):
         with open(self.file, 'a', encoding="utf8") as lg:
             if self.first:
-                 lg.write("#epoch\t%s\n"% "\t".join([str(i) for i in params]))
+                 lg.write("#epoch\t%s\n"% "\t".join(["%d.%s"%(i+2, l) for i, l in enumerate(params)]) )
                  self.first=False
             self.written += 1
             lg.write("%s\t%s\n"%( self.written,  "\t".join(
@@ -70,10 +71,10 @@ class EpochLog(callbacks.Callback):
                     )
 
 class BatchLog(callbacks.Callback):
-    def __init__(self, max_writes = 10000):
+    def __init__(self, tag, max_writes = 10000):
         super().__init__()
         self.first = True
-        self.file = "batch-log.txt"
+        self.file = "batch-log-%s.txt"%tag
         self.written = 0
         self.max_writes = max_writes
         with open(self.file, 'w', encoding="utf8") as lg:
@@ -83,17 +84,17 @@ class BatchLog(callbacks.Callback):
             return
         with open(self.file, 'a', encoding="utf8") as lg:
             if self.first:
-                 lg.write("#batch\t%s\n"% "\t".join([str(i) for i in logs]))
+                 lg.write("#batch\t%s\n"% "\t".join(["%d.%s"%(i+2, l) for i, l in enumerate(logs)]))
                  self.first=False
             lg.write("%s\t%s\n"%( self.written,  "\t".join(
                                 [ str(logs[i]) for i in logs ]
-                            ) 
+                            )
                         )
                     )
         self.written += 1
         
 class MaskerModel:
-    def __init__(self, input_shape):
+    def __init__(self, input_shape, steady = None):
         """
             Requires input images to be smaller than input shape
             Args:
@@ -101,7 +102,7 @@ class MaskerModel:
             
         """
         self.input_shape = input_shape
-    
+        self.steady = steady
     
     def getPaddedInput(self, img, cval=0):
         
@@ -182,7 +183,7 @@ class MaskerModel:
         c = conv1(c)
         print(c)
         
-        for i in range(5):
+        for i in range(self.steady):
             steady = keras.layers.Conv3D(
                         256, 
                         ( 3, 3, 3),
@@ -247,7 +248,7 @@ class MaskerModel:
         
               
         self.model.compile(
-                optimizer=keras.optimizers.Adam(1e-5),
+                optimizer=keras.optimizers.Adam(1e-6),
                 loss = keras.losses.mean_squared_error,
                 metrics = ["accuracy", "binary_accuracy", channelSummer(0), channelSummer(1), channelSummer(2)]
                 )
@@ -260,18 +261,18 @@ class MaskerModel:
             while True:
                 yield images[index:index+1], labels[index:index+1]
                 index = (index + 1)%steps_per_epoch
-        epochlog = EpochLog()
-        batchlog = BatchLog()
+        epochlog = EpochLog(self.steady)
+        batchlog = BatchLog(self.steady)
         
         
-        for i in range(100):        
+        for i in range(1):        
             self.model.fit_generator(generator=trainGenerator(),
                         steps_per_epoch=steps_per_epoch,
-                        epochs=100, 
+                        epochs=250, 
                         verbose=2,
                         callbacks = [epochlog, batchlog]
                         )
-            self.model.save("dog-tired.h5", include_optimizer=False)
+            self.model.save("dog-tired-%s.h5"%self.steady, include_optimizer=False)
     def predictImages(self, image, restore=True):
         padded_img = self.getInputData([image])
         #pred = self.getOutputData(image).astype("uint8")
@@ -305,6 +306,10 @@ class MaskerModel:
             
         """
         saved_model = keras.models.load_model(model_file)
+        if self.steady==None:
+            #implies that the model is 
+            self.model = model
+            
         weight_dict = { l.name : l.get_weights() for l in saved_model.layers}
         
         current = self.model.get_weights()

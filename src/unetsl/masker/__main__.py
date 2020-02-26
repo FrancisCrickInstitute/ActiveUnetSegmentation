@@ -9,12 +9,14 @@ def masker():
     pass
 
 @masker.command("train")
-def train():
-    model_name = "dog-tired.h5"
+@click.argument("steady", default = 5)
+@click.option("-r", "--restart", default=False, is_flag=True)
+def train(steady, restart):
+    model_name = "dog-tired-%s.h5"%steady
     model_path = pathlib.Path(model_name)
-    mm = MaskerModel( (1, 384, 384, 384))
+    mm = MaskerModel( (1, 384, 384, 384), steady)
     mm.createModel()
-    if model_path.exists():
+    if model_path.exists() and restart:
         mm.loadWeights(model_path)
     print(mm.model.summary())
     images = [ unetsl.data.loadImage(os.path.join("images", img))[0] for img in os.listdir("images")]
