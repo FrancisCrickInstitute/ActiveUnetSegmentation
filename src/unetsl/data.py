@@ -291,8 +291,8 @@ class RotatedIndexedVolumeData(IndexedVolumeData):
             for sample_czyx in y_batch:
                 for channel_zyx in sample_czyx:
                     for slice_yx in channel_zyx:
-                        #slice_yx[:, :] = (skimage.transform.rotate(slice_yx*1.0, angle_deg, preserve_range=True)>0.1)*1
-                        slice_yx[:, :] = rotate2DByPixels(slice_yx, angle_deg)
+                        slice_yx[:, :] = skimage.transform.rotate(slice_yx, angle_deg, preserve_range=True, order=0)
+                        #slice_yx[:, :] = rotate2DByPixels(slice_yx, angle_deg)
             
             x_batch = x_batch[:, 
                               offset[0]:offset[0] + self.patches[0], 
@@ -939,12 +939,11 @@ def loadImage(imageFile):
                 slices = tags.get("slices", 1)
                 channels = tags.get("channels", 1)
                 if slices==1 and frames>1:
-                    slices = frames
-                    frames = slices
-                    print("re-ordered frames and slices!")
+                    print("replacing frames with slices")
+                    slices = frames;
+                    frames = 1
                 data = data.reshape((frames, slices, channels, data.shape[-2], data.shape[-1]))
                 data = numpy.rollaxis(data, 2, 1)
-                
             if len(data.shape)==3:
                 #non-imagej assumed to be single channel z-stack.
                 data = data.reshape((1, 1, *data.shape[:]))

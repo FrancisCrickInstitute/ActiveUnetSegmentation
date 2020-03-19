@@ -21,7 +21,12 @@ def getGaussianKernel(sigma, N=128):
 
 def main(image_generator, result_manager):
     #inp = tensorflow.constant(img, dtype="float32")
-    inp = tensorflow.placeholder(dtype="float32", name="image_to_blur")
+    
+    inp = tensorflow.placeholder(
+            shape=(24, 1, 63, 512, 512), 
+            dtype="float32", 
+            name="image_to_blur"
+            )
     
     kernel = getGaussianKernel( 40 )
     #blurred = scipy.ndimage.convolve(inp, kernel)
@@ -46,7 +51,7 @@ def main(image_generator, result_manager):
             )
     with tensorflow.Session() as sess:
         for name, img in image_generator:
-            res = blurred_mxed.eval({inp.name: img})
+            res = blurred_mxed.eval({inp.name: img[0]})
             result_manager(name, res)
             
     return res
@@ -63,6 +68,7 @@ class HeightMapStacker:
         stack = []
         for image in images:
             img, tags = unetsl.data.loadImage(image)
+            print(img.shape)
             self.tags.update(tags)
             stack.append(img)
             if len(stack)==1:
