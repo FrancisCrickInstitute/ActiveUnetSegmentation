@@ -909,7 +909,7 @@ def getImageJCalibration(img, tags = None):
     
     
 
-def loadImage(imageFile):
+def loadImage(imageFile, swap_2d_time_series=True):
     """
         Loads the image file and returns it as 'frames, channels, z, y, x' data,
         or (1, channels, frames, y, x) if the image is 
@@ -922,6 +922,11 @@ def loadImage(imageFile):
         2d time series. (1, c, frames, y, x) this produces behavior where, a
         2d+t network will work with consecutive frames, but a 2d w/out time 
         will not notice the difference.
+        
+        Args:
+            imageFile: path to file to be loaded. converts to str.
+            swap_2d_time_series: if the image has N time points and 1 z slice
+                the file is reshaped to have N z-slices for using with 3d unets.
         
     """
     imageFile = str(imageFile)
@@ -938,7 +943,7 @@ def loadImage(imageFile):
                 frames = tags.get("frames", 1)
                 slices = tags.get("slices", 1)
                 channels = tags.get("channels", 1)
-                if slices==1 and frames>1:
+                if swap_2d_time_series and slices==1 and frames>1:
                     print("replacing frames with slices")
                     slices = frames;
                     frames = 1
@@ -978,7 +983,7 @@ def shapeThatThing(data):
         return arr.reshape(t, 1, 1, h, w)
     elif dims==4:
         data = numpy.array([data])
-        numpy.rollaxis(2, 1)
+        data = numpy.rollaxis(data, 2, 1)
     elif dims==5:
         data = numpy.rollaxis(data, 2, 1)
     return data
