@@ -140,7 +140,7 @@ def showDataSources(config_file):
     stride = config[unetsl.STRIDE]
     
     sources = unetsl.data.getDataSources(source_configs, config[unetsl.NORMALIZE_SAMPLES])
-    #pyplot.ion()
+    pyplot.ion()
     volumes = []
     DO_ALL = False
     for source in sources:

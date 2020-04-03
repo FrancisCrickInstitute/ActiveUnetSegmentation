@@ -483,6 +483,7 @@ def minPool(arr, pool):
     return Pooler(arr.shape, pool, numpy.min)(arr)
 
 
+
 def rotate2DByPixels(in_img, angle_deg):
     angle=angle_deg*math.pi/180.0
     cx = in_img.shape[1]//2
@@ -965,8 +966,9 @@ def loadImage(imageFile, swap_2d_time_series=True):
 
 def shapeThatThing(data):
     """
+        @Deprecated
         
-        Recieves an image as TCZYX and changes it to TCZYX. 
+        Recieves an image as TZCYX and changes it to TCZYX. 
         For lower dimensioned images, they are broad cast to 
         higher dimension with the added axis of length 1.
         
@@ -1050,9 +1052,13 @@ class MalformedImageException(Exception):
 
 def splitIntoChannels(input_shape, image):
     """
-       By default images are loaded as (t, c, z, y, x) if an image doesn't 
-       contain channel information it will be put into a (1, 1, z*t*c, y, x)
-       array, this will attempt to separate the z*t*c based on the input shape.
+        @Deprecated
+       By default images are loaded as (t, c, z, y, x) they're then parsed
+       to be used by the model. This is a fallback incase the images were
+       loaded with incorrect channel information.
+       
+       doesn't contain channel information it will be put into a (1, 1, z*t*c, y, x)
+       array will attempt to separate the z*t*c based on the input shape.
        
         Args:
             input_shape : (c, z0, y0, x0) shape required by model
@@ -1066,6 +1072,7 @@ def splitIntoChannels(input_shape, image):
     if len(image.shape)==5:
         print("5 dim format, assuming [n, c, z, y, x] %s"%str(image.shape))
         if image.shape[1]!=input_shape[0]:
+            print("\t\t[WARNING] updating geometry")
             if image.shape[-1] == channels:
                 #input as channels last (n, z, y, x, c) 
                 image = numpy.rollaxis(image, 4, 1)
@@ -1139,10 +1146,10 @@ def indexVolume(volume, patch_size, stride, padding):
     shape = [ v for v in volume.shape ] 
     
     if padding is not None:
+        #removes the range so that the index can be offset anywhere between 0 and padding.
         for i, p in enumerate(padding):
             shape[1+i] -= p
             
-    
     for i in range(len(patch_size)):
         if shape[i]<patch_size[i]:
             print("Volume is smaller than input patch! Cannot index.")
@@ -1218,7 +1225,6 @@ def getWeightedFileGroups(original_folder, segmentation_folder, weights_folder):
     n_ws.sort()
 
     shortest = min(map(len, (n_inp, n_skel, n_ws)))
-    
     n_inp = n_inp[:shortest]
     n_ws = n_ws[:shortest]
     n_skel = n_skel[:shortest]
@@ -1269,6 +1275,7 @@ def getPairedFileSources(config, normalize_samples):
 def fileSources(original_file, segmentation_file, labeller, normalize_samples):
     inp, _ = loadImage(original_file)
     lbl, _ = loadImage(segmentation_file)
+    #new load images, this is always true!
     if len(inp.shape)==5 and len(lbl.shape)==5:
         v = []
         for inp_frame, lbl_frame in zip(inp, lbl):
@@ -1281,7 +1288,7 @@ def fileSources(original_file, segmentation_file, labeller, normalize_samples):
                             )
                     )
     else:
-    #TODO fix volume shape for output. 
+        print("[Deprecated] This case is never true")
         v = [ 
             IndexedVolumeData(
                     inp, 
@@ -1293,16 +1300,16 @@ def fileSources(original_file, segmentation_file, labeller, normalize_samples):
     return v
 
 def weightedFileSource(img, seg, weights, labeller, normalize_samples):
-    inp, _ = loadImage(img)
-    lbl, _ = loadImage(seg);
-    wgt, _ = loadImage(weights)
-    
-    return WeightedIndexedVolumeData(inp, lbl, wgt, labeller=labeller, normalize_samples=normalize_samples)
-
+    inps, _ = loadImage(img)
+    lbls, _ = loadImage(seg);
+    wgts, _ = loadImage(weights)
+    wivds = []
+    for inp, lbl, wgt in zip(inps, lbls, wgts):
+        wivds.append(WeightedIndexedVolumeData(inp, lbl, wgt, labeller=labeller, normalize_samples=normalize_samples))
+    return wivds
 
 def getWeightedDirectorySources(source_config, normalize_samples):
     labeller = labeller_map[source_config[LABELLER]]
-    
     dir_groups = list(zip(
             source_config[INPUT_FOLDERS], 
             source_config[LABEL_FOLDERS], 
@@ -1312,7 +1319,7 @@ def getWeightedDirectorySources(source_config, normalize_samples):
         img_groups += getWeightedFileGroups(im, lbl, wght)
     sources = []
     for img, seg, weight in img_groups:
-        sources.append( weightedFileSource(img, seg, weight, labeller, normalize_samples))
+        sources += weightedFileSource(img, seg, weight, labeller, normalize_samples)
         
     return sources
     

@@ -7,6 +7,7 @@ import unetsl.model
 import re
 import numpy
 import time
+import scipy.ndimage
 
 import keras.models
 #import tensorflow.keras.models
@@ -136,11 +137,39 @@ class CropResize:
         span = arr.shape[:full] + self.view 
         highs = tuple(l + s for l, s in zip(lows, span))
         return tuple(slice(l, h) for l, h in zip(lows, highs) )
+    
+class RegionCropResize(CropResize):
+    def __init__(self, input_shape, depth=None, pool=None, offset = None):
+        super().__init__(input_shape, depth, pool, offset)
+    def toModelOutputSize(self, chunk):
+        """
+            Changes a set of labelled regions
+        """
+        slc = self.getFullSlice(chunk)
         
+        cropped = chunk[slc]
+        n_labels = cropped.shape[1]
+        regions = n_labels - 1;
+        new_shape = cropped.shape
+        y = numpy.zeros(new_shape, numpy.int8)
+        for i, stack in enumerate(cropped):
+            seperated = numpy.sum(stack[1:], axis=0)
+            for j, slc in enumerate(seperated):
+                labelled, count = scipy.ndimage.label(slc)
+                lim = n_labels
+                if count<n_labels:
+                    lim = count
+                elif count>n_labels:
+                    labelled[labelled>n_labels]=n_labels
+                for label in range(lim):
+                    y[i, label, j] = (labelled==(label+1))*1
+        return y
+    
 RESAMPLER_MAP = {
         "max pool" : MaxPoolResize,
         "min pool" : MinPoolResize,
-        "crop" : CropResize
+        "crop" : CropResize,
+        "region crop" : RegionCropResize
     }
     
 class CerberusDataGenerator:
