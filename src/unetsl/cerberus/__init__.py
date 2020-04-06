@@ -158,11 +158,12 @@ class RegionCropResize(CropResize):
                 labelled, count = scipy.ndimage.label(slc)
                 lim = n_labels
                 if count<n_labels:
-                    lim = count
-                elif count>n_labels:
-                    labelled[labelled>n_labels]=n_labels
+                    lim = count + 1
+                elif count>=n_labels:
+                    labelled[labelled>regions]=regions
                 for label in range(lim):
-                    y[i, label, j] = (labelled==(label+1))*1
+                    #start at 1 for categorical.
+                    y[i, label, j] = (labelled==(label))*1
         return y
     
 RESAMPLER_MAP = {
