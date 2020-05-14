@@ -1,25 +1,35 @@
-# UnetSegmentations
+# ActiveUnetSegmentations
 
-For segmenting images using unet.
+For segmenting images using unet. Essentially a pixelwise classifier.
+
+We title it active because currently we use it in conjunction with active 
+contours for both creating training data and segmenting the resulting 
+network predictions.
 
 ## Installing
 
+The installation of ActiveUnetSegmentation follows a pretty standard model for 
+python modules. Clone the repository, then use pip to install the program into
+a virtual environment.
+
 ### Virtual Environment
 
-Create a virtualenv to install. *If the goal is to use cuda check next section*
+Create a virtualenv to install. *If the goal is to use an NVIDIA gpu, then
+check next section for installing with cuda.*
     
     python -m venv unet-env
 
+Clone the repositiory 
+
+    git clone https://github.com/FrancisCrickInstitute/ActiveUnetSegmentation.git
+    
+This will clone the repository into a folder called ActiveUnetSegmentation
+
 Then run the associtate pip on to the src folder that contains `setup.py`.
 
-    unet-env/bin/pip install UNetSl/src
-
-** Either the virtualenv needs to be activated, or the use full
-path to pip.**
-
-    /path/to/env/bin/pip install .
+    unet-env/bin/pip install ActiveUnetSegmentation/src
     
-This will install dependencies, but it will not include native libraries.
+This will install dependencies , but it will not include native libraries.
 
 ### Installing for use with CUDA.
 
@@ -27,7 +37,7 @@ It is important that the cuda version matches the cuda version used with
 tensorflow. 
 
     python -m venv unet-cuda-env
-    unet-cuda-env/bin/pip install tensorflow-gpu==1.13 keras scikit-image numpy urwid click
+    unet-cuda-env/bin/pip install tensorflow-gpu==1.13.1 keras scikit-image numpy urwid click
     
 **Tensorflow 1.13 has worked on cuda 10.0 and works with multigpu**
 
@@ -47,9 +57,9 @@ First use module to load the necessary modules.
 
     ml Anaconda3/2019.07
 
-Then install the relevant packages.
+Create a conda environment with the relevant packages installed.
 
-    conda create --name unet-3d numpy scikit-image tensorflow-gpu=1.13 keras click    
+    conda create --name unet-3d numpy scikit-image tensorflow-gpu=1.13.1 keras click    
 
 Once that is done, notice that it has installed all of the native libs, we can
 activate the environment.
@@ -68,31 +78,137 @@ everything doesn't get re-installed.
     
 That should install two new packagse in the venv, the unet library and urwid.
 
+## Data
+
+The data requires a paired set of images. An input image and an output image.
+The easiest way to get started is to create a folder where you want to work
+and create the folders, 'images' and 'labels'. Then put the input images in
+image and corresponding label image in the folder labels with the same name.
+They don't have to have the same name.
+
+### Input
+
+The input image is just a standard image that you want to label, I usually make 
+sure to save it as a grayscale image to simplify the channels.
+
+For 2D segmentations I commonly use the `input_shape` parameter of.
+
+    input_shape (1, 3, 64, 64)
+
+This is a single channel, that processes three time points of 64x64 patches.
+In practice I use images saved from fiji as 2D time series with a grayscale
+lookup table. When images are loaded images with multiple time points  
+but a single z slice the time and depth are transposed.
+
+For 3D segmetations I commonly use
+
+    input_shape (1, 64, 64, 64)
+    
+The images are saved as 3D time series. When they are loaded they have the
+shape (time, channel, z, y, x)
+
+Data loading occurs in [unetsl.data](src/unetsl/data.py)
+
+### Labels
+
+The labelled images need to be the same shape image for now with a single channel.
+When specifying  a data source, there are two main label types. multiclass labels,
+or linear labels.
+
+*Multiclass labels* split the data in to channels for the output of the model. For
+out work we labelled a skeleton with membrane and vertex labels so labelled 
+image that we supply as a data source would be a single channel with 1's and 3's.
+Then the data gets split for the output of the model, one channel per label.
+
+   1 0 0     1 0 0   0 0 0
+   0 3 0  -> 0 1 0 & 0 1 0
+   0 1 0     0 1 0   0 0 0
+   
+The way these labels are described work well with a sigmoid acitivation because 
+the labels can be overlapping.
+
+The multiclass labeller uses powers of 2, so a 16bit pixel format can have 16
+unique labels. 1, 2, 4, 8, 16, 32, 64 would each correspond to a unique label.
+Combinations can be used for overlapping labels.
+
+*Linear labels* are the next class of label, they correspond to a 'relu' activation
+and a single channel of output.
+
+These Do not change the output so they can work with float pixels or integer type pixels. We use this type of labelling
+with the distance transform. Linear labl
+
+
+
+
 ## Running
 
 All of the commands shown here are installed in the virtual environment, so
 either it needs to be activated, or a full path needs to be used.
 
-### Creating
-
 The program is run in three steps. First create the model, then train the model,
 then use the model to make predictions.
+
+### Creating
+
+
 
     create_model -c model_name.json
 
 If `model_name.json` does not exist a new .json file will be created with default
 values that can be edited see Model settings.
 
-### Training
+### Attach Data Sources
 
 To train a model, data sources need to be added. 
 
-    attach_data_sources -c model_name.json
+    $ attach_data_sources -c model_name.json
     
-From there a menu will prompt creating a data source. One example would be an original
-image that is in one directory, and the labels for that in another directory.
+From there a menu will prompt creating a data source. If the data is setup as
+per the example above, then we would.
 
-After that the model can be trained.
+> Using TensorFlow backend.  
+> enter type:   
+> 1. paired directory  
+> 2. weighted directories  
+> 3. remove existing sources.  
+> <anything else>. stop  
+>...
+
+Enter 1. for paired directories.
+
+> enter images directory: 
+
+Type images *tab complete should work*
+
+> enter labels directory:
+
+Type labels folder name.
+
+> enter a list of angles, leave blank if none
+
+Leave blank
+
+> labellers:  
+>  -  0 :  region labels  
+>  -  1 :  multiclass labels  
+>  -  2 :  categorical labels  
+>  -  3 :  double membrane labels  
+>  -  4 :  linear labels  
+>select labeller:  
+
+Select 1. 
+
+Then you'll be back to the original menu. Press enter and save when prompted to
+save. Data sources can be checked with,
+
+    $ inspect_data_sources -c default.json
+
+That will open a matplotlib plot with data sources.
+
+
+### Training
+
+Once datasources have been added the model can be trained.
 
     train_model -c model_name.json
 
@@ -100,6 +216,7 @@ This will train the image and at each epoch, model_name-latest.h5 will be writte
 with the most recent trained results. model_name-best.h5 will be written when
 the *best* results have been acheived. 
 
+### Predictions
 
 To predict an image: 
 
@@ -108,6 +225,9 @@ To predict an image:
 The model will predict the image and the output will be stored in prediction.tif
 
 ## Log Output
+
+**Debugging information**
+
 Example output from depth 3 cascade model.
 
 `#batch_number	batch	cascade_0_acc	cascade_0_binary_accuracy	cascade_0_loss	cascade_1_acc	cascade_1_binary_accuracy	cascade_1_loss	cascade_2_acc	cascade_2_binary_accuracy	cascade_2_loss	loss	size`
@@ -194,6 +314,8 @@ Now this one can be submitted with additional arguments to specify the model/ima
 
     
 ## Model settings
+
+**Outdated**
 
 The model settings 
 

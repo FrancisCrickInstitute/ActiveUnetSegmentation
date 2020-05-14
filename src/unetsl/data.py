@@ -938,8 +938,10 @@ def loadImage(imageFile, swap_2d_time_series=True):
             for p in tiff.pages:
                 data.append(p.asarray())
             data = numpy.array(data)
-            
             if tiff.is_imagej:
+                if tiff.is_rgb:
+                    print("warning: RGB LUT detected, summing along last axis!")
+                    data = numpy.sum(data, axis=-1)
                 getImageJCalibration(tiff, tags)
                 frames = tags.get("frames", 1)
                 slices = tags.get("slices", 1)
@@ -961,6 +963,7 @@ def loadImage(imageFile, swap_2d_time_series=True):
             
     except Exception as error:
         print("defaulting to skimage.io because: %s"%error)
+        print("Check if RGB LUT has been used!")
     
     return skimage.io.imread(imageFile), tags
 
@@ -1007,6 +1010,7 @@ def getMetaData(tags):
     
     
 def saveImage(file_name, data, tags={}):
+    file_name = str(file_name) #pathlib compat.
     resolution = getResolution(tags)
     metadata = getMetaData(tags)
     

@@ -8,6 +8,15 @@ import click
 def masker():
     pass
 
+@masker.command("create")
+@click.argument("steady", default = 5)
+def create(steady):
+    print(steady)
+    mm = MaskerModel( (1, 384, 384, 384, ), steady)
+    model_name = "dog-tired-%s.h5"%steady
+    mm.createModel()
+    mm.saveModel(model_name)
+    
 @masker.command("train")
 @click.argument("steady", default = 5)
 @click.option("-r", "--restart", default=False, is_flag=True)
@@ -66,10 +75,23 @@ def lazyLoadImages( image_folder ):
             folder where images will be.
     """
     image_list = [  ]
+
+import threading, time, sys
+
+queued = []
+
+def input_thread():
     
+    while True:
+        i = input("enter value")
+        queued.append(i)
+    sys.exit(0)
+
 @masker.command("inspect")
-def inspect(model_file):
-    mm = MaskerModel( (1, 384, 384, 384))
+@click.argument("model_file")
+@click.argument("steady", default = 5)
+def inspect(model_file, steady):
+    mm = MaskerModel( (1, 384, 384, 384), steady)
     mm.createModel()
     mm.model.summary()
     #if os.path.exists("dog-tired.h5"):
@@ -83,18 +105,28 @@ def inspect(model_file):
     unetsl.data.pyplot.ion()
     img_stack = mm.getInputData(img_stack)
     lbl_stack = mm.getOutputData(lbl_stack)
+    print(lbl_stack.shape)
+    lbl_stack = lbl_stack.reshape((lbl_stack.shape[0], 3, lbl_stack.shape[1]//3, *lbl_stack.shape[2:]))
     v = unetsl.data.VolumeViewer(0, lbl_stack[0])
-    v2 = unetsl.data.VolumeViewer(1, img_stack[0])
-    input("enter to continue...")
+    v2 = unetsl.data.VolumeViewer(1, img_stack[0:1])
     for i in range(lbl_stack.shape[0] - 1):
-        v.setData(lbl_stack[i + 1])
-        v2.setData(img_stack[i+1])
-        input("continue ...")    
-   
+        while True:
+            if len(queued)==0:
+                unetsl.data.pyplot.pause(0.1)
+                continue
+            else:
+                queued.remove(queued[-1])
+                break
+        v.setData(lbl_stack[i+1])
+        v2.setData(img_stack[i+1:i+2])
+        
+
 
 
 def main():
     masker()
 
 if __name__=="__main__":
+    t = threading.Thread(target=input_thread)
+    t.start()
     main()

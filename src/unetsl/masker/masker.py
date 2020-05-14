@@ -330,4 +330,5 @@ class MaskerModel:
         #self.model.set_weights(current)
     def loadModel(self, model_file):
         self.model = keras.models.load_model(model_file)
-    
+    def saveModel(self, filename):
+        self.model.save(filename, include_optimizer=False)
