@@ -27,9 +27,9 @@ def getDefaultCerberusConfig():
             unetsl.DATA_SOURCES : []
             }
     default_heads = [
-            ("membrane", 2, 2, 0, "sigmoid", 0, unetsl.data.MULTICLASS_LABELS, "max pool"), 
-            ("centers", 1, 1, 2, "sigmoid", 1, unetsl.data.MULTICLASS_LABELS, "crop"),
-            ("distance", 1, 6, 3, "relu", 0, unetsl.data.LINEAR_LABELS, "min pool")
+            ("distance", 1, 6, 2, "relu", 0, unetsl.data.LINEAR_LABELS, "min pool"),
+            ("membrane-scale", 2, 2, 0, "sigmoid", 1, unetsl.data.MULTICLASS_LABELS, "max pool"),
+            ("membrane-crop", 2, 2, 0, "sigmoid", 0, unetsl.data.MULTICLASS_LABELS, "crop") 
             ]
     
     for nm, n_labels, bits, offset, activation, depth, labeller_name, resampler in default_heads:
@@ -53,6 +53,26 @@ def saveConfig(cfg, pth):
     with open(pth, 'w', encoding="utf8") as f:
         json.dump(cfg, f, indent="  ")
     
+
+def guessDefaultLossFunction(name):
+    """
+      For setting up a default model that "works" without changing any parameters 
+      during create/attach/train.
+      
+      'distance' is a head with a distance transform output, this presumes
+      linear labels, and the logMse. This seems a bit more robust than the mse
+      and it prevents the distance transform from dominating the loss optimization.
+      
+      'membrane' or 'skeleton' would be a sparse labelling where the dice
+      coefficient has shown to work well.
+      
+    """
+    if 'distance' in name:
+        return "unetsl.model.logMse"
+    elif 'membrane' in name or 'skeleton' in name:
+        return "unetsl.model.sorensenDiceCoefLoss"
+    
+    return "keras.losses.mean_squared_error"
 
 def getTrainingConfig(config):
     """
@@ -78,9 +98,9 @@ def getTrainingConfig(config):
     
     for head in config["heads"]:
         if head["name"] not in loss_fns:
-            loss_fns[ head["name"] ] = "keras.losses.mean_squared_error"
+            loss_fns[ head["name"] ] = guessDefaultLossFunction(head["name"])
         if head["name"] not in loss_wts:
-            loss_wts[ head["name"] ] = 0
+            loss_wts[ head["name"] ] = 1
     
     return training_config
 

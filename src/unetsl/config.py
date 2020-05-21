@@ -56,32 +56,30 @@ def parseExtendedOptions(extended_options):
 
 def getDefaultTrainingConfig():
     dc = {
-        MODEL_OUT: "default.h5", 
+        MODEL_OUT: "default-model.h5", 
         LEARNING_RATE:0.000001,
         OPTIMIZER: "keras.optimizers.Adam",
         LOSS_FUNCTION:  "unetsl.model.sorensenDiceCoefLoss",
         STRIDE: (0, 3, 32, 32), 
         BATCH_SIZE: 1,
         MULTI_GPU: False,
-        DATA_SOURCES: [],
         SAMPLES_TO_PREDICT: [],
         NORMALIZE_SAMPLES: False,
-        VALIDATION_FRACTION: 0.2,
+        VALIDATION_FRACTION: 0.03125,
         EPOCHS : 2000
     }
     return dc
 
 def getDefaultModelConfig():
     parameters = {
-            INPUT_SHAPE : (1,64, 64, 64),
+            INPUT_SHAPE : (1,3, 64, 64),
             KERNEL_SHAPE : (3, 3, 3),
-            POOLING_SHAPE : (2, 2, 2),
-            N_LABELS : 2,
+            POOLING_SHAPE : (1, 2, 2),
+            N_LABELS : 1,
             DEPTH : 3,
             N_FILTERS : 32,
             MODEL_FILE : "default-model.h5", 
             ACTIVATION : "sigmoid",
-            CONDENSER : (1,1,1),
             SPATIAL_DROPOUT_RATE : 0.0625
         }
     return parameters
