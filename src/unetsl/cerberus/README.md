@@ -300,13 +300,13 @@ layer shaper                                                                    
 ```
 - **reduction type** How the output layers are converted to an output image with one
 channel per head. The type is guessed by the activation function.
--- 0 max value reduction where channel -> corresponding bit.
--- 1 multiclass reduction, sum of channels shifted corresponding bits.
--- 2 linear reduction, returns the input unchanged.
+    - 0 max value reduction where channel maps to corresponding corresponding bit.
+    - 1 multiclass reduction, sum of channels shifted corresponding bits.
+    - 2 linear reduction, returns the input unchanged.
 - **layer shaper** for outputs that are at depths greater than 0. The name of the
 output is checked for 'crop' otherwise upsample is used.
--- upsample nearest neighbor expansion.
--- crop pads the smaller output to the size of the actual output.
+    - upsample nearest neighbor expansion.
+    - crop pads the smaller output to the size of the actual output.
 
 
 ## Description
