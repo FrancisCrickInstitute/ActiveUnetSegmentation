@@ -1,4 +1,4 @@
-#Cerberus
+# Cerberus
 
 The cerberus model is a small extension to the UNET model where it uses the 
 same structure as the unet, but uses 3 different outputs.
@@ -98,15 +98,15 @@ labeller                                                                        
 
 ```
 
--**name** for mapping loss functions.
--**n_labels** number of labels, 1 one label for output.
--**bits** number of bits for all of the labels, 6 bits used.
--**offset** bits offset from 0, 2 first two bits of training data ignored.
--**activation** final output activation: "relu" rectified linear function.
--**depth** depth that layer is output at: 0 max resolution.
--**resampler** method of pooling training data. min pool pixel in pooling
+- **name** for mapping loss functions.
+- **n_labels** number of labels, 1 one label for output.
+- **bits** number of bits for all of the labels, 6 bits used.
+- **offset** bits offset from 0, 2 first two bits of training data ignored.
+- **activation** final output activation: "relu" rectified linear function.
+- **depth** depth that layer is output at: 0 max resolution.
+- **resampler** method of pooling training data. min pool pixel in pooling
 size patches.
--**labeller** How the n_labels output are converted to training labels. "linear
+- **labeller** How the n_labels output are converted to training labels. "linear
 labels" is no change for relu output.
 
 ```
@@ -123,15 +123,15 @@ labeller                                                                        
                                                       < cancel                                             >< finished                                           >
 ```
 
--**name** for mapping loss functions.
--**n_labels** number of labels, 2 two labels for output.
--**bits** number of bits for all of the labels, 2 bits used.
--**offset** bits offset from 0, only first 2 bits are used.
--**activation** "sigmoid" value between 0 and 1 thresholded at 0.5.
--**depth** depth of 1, scaled by max pooling.
--**resampler** method of pooling training data. max pool pixel in pooling
+- **name** for mapping loss functions.
+- **n_labels** number of labels, 2 two labels for output.
+- **bits** number of bits for all of the labels, 2 bits used.
+- **offset** bits offset from 0, only first 2 bits are used.
+- **activation** "sigmoid" value between 0 and 1 thresholded at 0.5.
+- **depth** depth of 1, scaled by max pooling.
+- **resampler** method of pooling training data. max pool pixel in pooling
 size patches.
--**labeller** multiclass labeller that takes two channels and turns them to 
+- **labeller** multiclass labeller that takes two channels and turns them to 
 0, 1, 2, or 3. 
 
 ```
@@ -148,14 +148,14 @@ labeller                                                                        
                                                       < cancel                                             >< finished                                           >
 ```
 
--**name** for mapping loss functions.
--**n_labels** number of labels, 2 two labels for output.
--**bits** number of bits for all of the labels, 2 bits used.
--**offset** bits offset from 0, only first 2 bits are used.
--**activation** "sigmoid" value between 0 and 1 thresholded at 0.5.
--**depth** depth of 0, scaled by a single pooling.
--**resampler** crops the center of the stack, but depth is zero so it does nothing.
--**labeller** multiclass labeller that takes two channels and turns them to 
+- **name** for mapping loss functions.
+- **n_labels** number of labels, 2 two labels for output.
+- **bits** number of bits for all of the labels, 2 bits used.
+- **offset** bits offset from 0, only first 2 bits are used.
+- **activation** "sigmoid" value between 0 and 1 thresholded at 0.5.
+- **depth** depth of 0, scaled by a single pooling.
+- **resampler** crops the center of the stack, but depth is zero so it does nothing.
+- **labeller** multiclass labeller that takes two channels and turns them to 
 0, 1, 2, or 3. 
 
 ### Attach a data source
