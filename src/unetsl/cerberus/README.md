@@ -231,7 +231,7 @@ batch size                                                                      
 multi-gpu                                                                       false
 samples to predict                                                              []
 normalize samples                                                               false
-validation fraction                                                             0.2
+validation fraction                                                             0.03125
 epochs                                                                          2000
 loss weights                                                                    {
                                                                                   "distance": 1,
@@ -240,14 +240,77 @@ loss weights                                                                    
                                                                                 }
                                                      < cancel                                            >< finished                                          >
 ```
-
+- **model file** name** name of model to be loaded.
+- **output file** a template name. with 'default-model.h5' the output will be saved
+as 'default-model-latest.h5' end of epoch, 'default-model-batch.h5' after 5000
+batches, 'default-model-best.h5' best as determined by the loss function.
+- **learning rate** optimizer parameter.
+- **optimizer** optimizer used to minimize loss function.
+- **loss function** one per head.
+- **stride** for scanning data, (channel, depth, height, width).
+- **batch size** number of samples per batch. Larger batch requires more memory.
+- **multi-gpu** for using multi-gpus. 
+- **samples to predict** for adding samples that get predicted at the end of an epoch.
+- **normalize samples** normalizes each batch.
+- **validation fraction** fraction of training samples to be used for validation data.
+- **epochs** when to stop training.
+- **loss weights** The full loss function is the Sum\[w_i f_i\].
 
 ### Predictions
 
-    cerberus predict model_name.h5 image.tif
+    cerberus predict default-model-latest.h5 image.tif
     
 That will open a prediction menu. 
-## Comparison
+
+```
+update settings
+
+model file                                                                      "default-model-latest.h5"
+image to predict                                                                "image.tif"
+output image                                                                    "pred-default-model-latest-image.tif"
+debug                                                                           false
+normalize samples                                                               false
+batch size                                                                      16
+                                                     < cancel                                            >< finished                                          >
+```
+
+- **model file** model used for prediction.
+- **image to predict** location of image being predicted.
+- **output image** where to save the output.
+- **debug** debug mode saves a second image with debug information. current probability window.
+- **normalize samples** normalizes the input
+- **batch size** batch size to be predicted, shouldn't change results.
+
+Second menu.
+
+```
+update settings
+
+reduction type                                                                  {
+                                                                                  "distance/Relu:0": 2,
+                                                                                  "membrane-scale/Sigmoid:0": 1,
+                                                                                  "membrane-crop/Sigmoid:0": 1
+                                                                                }
+layer shaper                                                                    {
+                                                                                  "distance/Relu:0": "upsample",
+                                                                                  "membrane-scale/Sigmoid:0": "upsample",
+                                                                                  "membrane-crop/Sigmoid:0": "crop"
+                                                                                }
+                                                     < cancel                                            >< finished                                          >
+```
+- **reduction type** How the output layers are converted to an output image with one
+channel per head. The type is guessed by the activation function.
+-- 0 max value reduction where channel -> corresponding bit.
+-- 1 multiclass reduction, sum of channels shifted corresponding bits.
+-- 2 linear reduction, returns the input unchanged.
+- **layer shaper** for outputs that are at depths greater than 0. The name of the
+output is checked for 'crop' otherwise upsample is used.
+-- upsample nearest neighbor expansion.
+-- crop pads the smaller output to the size of the actual output.
+
+
+## Description
+
 The UNET model behind cerberus is of the same structure as the original unet
 network, the only difference is that there are three different outputs. The
 outputs are set at different depths, and can be set to learn the idea behind this is

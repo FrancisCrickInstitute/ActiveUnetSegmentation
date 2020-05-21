@@ -1013,12 +1013,9 @@ def saveImage(file_name, data, tags={}):
     file_name = str(file_name) #pathlib compat.
     resolution = getResolution(tags)
     metadata = getMetaData(tags)
-    
     data = shapeThatThing(data)
     max_size = 2**35
-    
     shape = data.shape
-
     total = 1
     for p in shape:
         total = p*total

@@ -221,8 +221,6 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
             unetsl.predict.DEBUG : False,
             unetsl.NORMALIZE_SAMPLES: False,
             unetsl.BATCH_SIZE : 16,
-            unetsl.predict.REDUCTION_TYPE : [],
-            unetsl.predict.LAYER_SHAPER : []
         }
     config.update(unetsl.config.parseExtendedOptions(extended_options))
     
@@ -237,50 +235,19 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
     
     output_map = unetsl.model.getOutputMap(model)
     
-    rts = config[unetsl.predict.REDUCTION_TYPE]
-    lss = config[unetsl.predict.LAYER_SHAPER]
-
     rtm = {}
     sm = {}
-    n_reductions = len(rts)
-    n_shapers = len(lss)
-    n_outputs = len(output_map)
     
-    if n_reductions==0:
-        for key in output_map:
-            rtm[key] = guessReductionType(key, output_map[key])
-    elif n_reductions==1:
-        for key in output_map:
-            rtm[key] = rts[0]
-    elif n_reductions == n_outputs:
-        for i, key in enumerate(output_map):
-            rtm[key] = rts[i]
-    else:
-        for key in output_map:
-            if key not in rts:
-                raise Exception("parsing reduction type failed. see help reduction type.")
-            rtm[key] = rts[key]
-    
-    if n_shapers == 0:
-        for key in output_map:
-            sm[key] = guessShaper(key, output_map[key])
-    elif n_shapers==1:
-        for key in output_map:
-            sm[key] = lss[0]
-    elif n_shapers == n_outputs:
-        for i, key in enumerate(output_map):
-            sm[key] = lss[i]
-    else:
-        for key in output_map:
-            if key not in lss:
-                raise Exception("parsing reduction type failed. see help reduction type.")
-            sm[key] = lss[key]
-    
+    for key in output_map:
+        rtm[key] = guessReductionType(key, output_map[key])
+    for key in output_map:
+        sm[key] = guessShaper(key, output_map[key])
     
     tune_config = {
         unetsl.predict.REDUCTION_TYPE : rtm,
         unetsl.predict.LAYER_SHAPER : sm
     }
+    
     if batch:
         pass
     elif not unetsl.cli_interface.configure(tune_config):
@@ -310,12 +277,14 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
     predictor.GPUS = gpus
     
     out, debug = predictor.predict()
-    print(out.shape)
+    print("out shape: ", out.shape )
+    if config[unetsl.predict.DEBUG]:
+        print("debug shape: ", debug.shape)
     unetsl.data.saveImage(config[unetsl.predict.OUT_KEY], out, tags)
     
     if config[unetsl.predict.DEBUG]:
         click.echo("saving debug data as debug.tif")
-        unetsl.data.saveImage("debug.tif", numpy.array([debug], dtype="float32"), tags)
+        unetsl.data.saveImage("debug.tif", debug, tags)
     
     click.echo("finished cerberus prediction!")
 
