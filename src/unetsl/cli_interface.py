@@ -68,6 +68,57 @@ class FileCompleter():
             self.suggestions = [str(c) for c in self.choices if c.name.startswith(chk.name)]
         self.last = raw_text
         
+        
+class LayerCompleter():
+    """
+        For getting a layer name from the command line.
+    """
+    def __init__(self, layer_names):
+        
+        self.choices = layer_names
+        self.last = ""
+        self.suggestions = layer_names[:]
+    def __call__(self, text, state):
+        emsg = None
+        try:
+            self.getNewSuggestions(text, state)
+        except:
+            self.suggestions = []
+            emsg = "failed to update: %s"%(sys.exc_info(),)
+        if False:
+            """
+                Using print to debug this is impossible. log to a file.
+                #TODO remove this.
+            
+            """
+            with open("junk-log.txt", 'a', encoding="utf8") as f:
+                f.write(">>%s::%s\n"%(state, text))
+                if emsg:
+                    f.write("!!%s\n"%emsg)
+                for sug in self.suggestions:
+                    f.write("\t%s\n"%sug)
+        if state < len(self.suggestions):
+            return self.suggestions[state]
+        return None
+    
+    def getNewSuggestions(self, raw_text, state):
+        """
+            Populets the self.suggestions field with suggestions.
+            
+            Args:
+            raw_text: textused for finding the path
+            state: unused, from rlcomplete interface.
+        """
+        if len(raw_text) > 0:
+            self.suggestions = [i for i in self.choices if i.startswith(raw_text)]
+        else:
+            self.suggestions = [self.choices[:]]
+
+def getLayersPrompt(layer_names, message="select layer: "):
+    readline.set_completer(LayerCompleter(layer_names))
+    readline.set_completer_delims("")
+    readline.parse_and_bind("tab: complete")
+    return input(message)
 
 def getFilePrompt(message):
     """

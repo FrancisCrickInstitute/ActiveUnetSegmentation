@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 
+import tensorflow.keras as keras
 
-from keras.models import load_model
-from keras import backend as K
+from tensorflow.keras.models import load_model
+from tensorflow.keras import backend as K
 
 import unetsl.data
 import unetsl.predict
