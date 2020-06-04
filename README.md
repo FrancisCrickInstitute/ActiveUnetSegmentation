@@ -74,7 +74,7 @@ Then I create a virtual environment, as above, but using the system packages so
 everything doesn't get re-installed.
 
     python -m venv unet-cuda-conda --system-site-packages
-    ./unet-cuda-conda/bin/pip install UNetSL/src
+    ./unet-cuda-conda/bin/pip install ActiveUnetSegmentation/src
     
 That should install two new packagse in the venv, the unet library and urwid.
 
@@ -120,9 +120,9 @@ out work we labelled a skeleton with membrane and vertex labels so labelled
 image that we supply as a data source would be a single channel with 1's and 3's.
 Then the data gets split for the output of the model, one channel per label.
 
-   1 0 0     1 0 0   0 0 0
-   0 3 0  -> 0 1 0 & 0 1 0
-   0 1 0     0 1 0   0 0 0
+    1 0 0     1 0 0   0 0 0
+    0 3 0  -> 0 1 0 & 0 1 0
+    0 1 0     0 1 0   0 0 0
    
 The way these labels are described work well with a sigmoid acitivation because 
 the labels can be overlapping.
