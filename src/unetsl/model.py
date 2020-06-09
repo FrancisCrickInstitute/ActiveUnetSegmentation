@@ -11,14 +11,15 @@ import unetsl.predict
 
 
 
-from keras.engine import Input, Model
-from keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, Softmax, SpatialDropout3D
+from tensorflow.keras.models import Model
 
-from keras.optimizers import Adam, SGD
+from tensorflow.keras.layers import Conv3D, MaxPooling3D, UpSampling3D, Activation, Softmax, SpatialDropout3D, Input
 
-from keras.layers.merge import concatenate
+from tensorflow.keras.optimizers import Adam, SGD
 
-import keras.losses
+from tensorflow.keras.layers import concatenate
+
+import tensorflow.keras.losses
 
 import pathlib
 
