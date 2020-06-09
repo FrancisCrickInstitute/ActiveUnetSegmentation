@@ -474,7 +474,7 @@ def predictMultiChannelImage(model, image, reduction_type =[], stride=None, outp
                         out[slc][improving] = labels[improving]
                         out[slc][updating] = (labels[updating] + out[slc][updating])/2
                         debug_out[slc][improving] = window[improving]
-                
+            print( ( j+ batch_size), "completed of:", len(slices) )    
         debug_out_stack.append(debug_out)
         full_out_stack.append(full_out);
                 
