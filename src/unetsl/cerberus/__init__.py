@@ -10,8 +10,8 @@ import time
 import scipy.ndimage
 
 import tensorflow.keras.models
-#import tensorflow.keras.models
 import tensorflow.keras.layers
+from tensorflow import keras
 
 BITS="bits"
 OFFSET="offset"
