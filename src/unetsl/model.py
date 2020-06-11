@@ -275,6 +275,7 @@ def createUnet3dModel(
     current_layer = inputs[0]
     levels = list()
     # add levels with max pooling
+    filter_list = list()
     for layer_depth in range(depth):
         
         layer1 = Conv3D(
@@ -310,10 +311,11 @@ def createUnet3dModel(
         if layer_depth < depth - 1:
             current_layer = MaxPooling3D(pool_size=pool_size)(layer2)
             levels.append([layer1, layer2, current_layer])
+            filter_list.append((2**layer_depth)*2)
         else:
             current_layer = layer2
             levels.append([layer1, layer2])
-        
+            filter_list.append((2**layer_depth)*2)
     
     # add levels with up-convolution or up-sampling
     for layer_depth in range(depth-2, -1, -1):
@@ -322,8 +324,8 @@ def createUnet3dModel(
         
         
         
-        filters = levels[layer_depth][1]._keras_shape[1]
-        
+        #filters = levels[layer_depth][1].shape[1]
+        filters = filter_list[layer_depth]
         current_layer = Conv3D(
                     filters , 
                     kernel_shape, 

@@ -125,11 +125,11 @@ def main():
     if len(sys.argv)<3 and '-c' not in sys.argv:
         print("usage: attach_data_source -c model_config.json")
         sys.exit(0)
-    
     cf = sys.argv[ sys.argv.index('-c') + 1]
     config = unetsl.config.getDefaultConfigurationTool()
     config.load(cf)
-    
+    existing = config.get(unetsl.DATA_SOURCES, [])
+    config[unetsl.DATA_SOURCES] = existing
     adding = True
     while adding:
         ret = mainMenu(config)

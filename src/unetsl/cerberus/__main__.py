@@ -121,7 +121,7 @@ def trainCerberusModel(config_file, gpus, batch):
             loss_weights=train_cfg["loss weights"]
         )
     
-    model.fit_generator(training_generator,
+    model.fit( (( {"input_1":x}, y ) for (x,y) in training_generator),
                         steps_per_epoch=training_batches,
                         epochs=train_cfg[unetsl.EPOCHS],
                         validation_data=validation_generator,

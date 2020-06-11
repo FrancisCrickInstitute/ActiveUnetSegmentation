@@ -101,10 +101,10 @@ def trainModel(config, n_gpus):
             model, 
             optimizer, 
             loss_function=loss_fun)
-    model.fit_generator(generator=training_generator,
+    model.fit( x = (( x, y ) for (x,y) in training_generator),
                         steps_per_epoch=training_batches,
                         epochs=config[unetsl.EPOCHS],
-                        validation_data=validation_generator,
+                        validation_data=( (x, y) for (x,y) in validation_generator ),
                         validation_steps=validation_batches,
                         callbacks=loggers, 
                         verbose=2
