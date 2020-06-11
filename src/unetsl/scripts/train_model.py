@@ -87,7 +87,7 @@ def trainModel(config, n_gpus):
     
     if config[unetsl.MULTI_GPU]:
         print("making multi-gpu")
-        from keras.utils import multi_gpu_model
+        from tensorflow.keras.utils import multi_gpu_model
         model = multi_gpu_model(model, gpus=n_gpus)
         
     lr = config[unetsl.LEARNING_RATE]

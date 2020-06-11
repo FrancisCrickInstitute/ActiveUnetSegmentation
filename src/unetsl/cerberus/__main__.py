@@ -111,7 +111,7 @@ def trainCerberusModel(config_file, gpus, batch):
     click.echo("validation total: %s train total: %s"%(validation_batches, training_batches ))
     
     if train_cfg[unetsl.MULTI_GPU] and gpus>1:
-        from keras.utils import multi_gpu_model
+        from tensorflow.keras.utils import multi_gpu_model
         model = multi_gpu_model(model, gpus=gpus)
     
     model.compile(            
