@@ -84,7 +84,7 @@ def getCerberusPredictor(model, batch_size=1, gpus=1):
         return 0
     
     if gpus>1:
-        from keras.utils import multi_gpu_model
+        from tensorflow.keras.utils import multi_gpu_model
         model = multi_gpu_model(model, gpus=gpus)
         
     
