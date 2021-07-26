@@ -76,7 +76,7 @@ def main(model, image, prediction, batch, extended_options, gpus, multi_channel)
     
     model = unetsl.model.loadModel(config[unetsl.predict.MODEL_KEY])
     if gpus>1:
-        from keras.utils import multi_gpu_model
+        from tensorflow.keras.utils import multi_gpu_model
         model = multi_gpu_model(model, gpus=gpus)
         
     image, tags = unetsl.data.loadImage(config[unetsl.predict.IMG_KEY])

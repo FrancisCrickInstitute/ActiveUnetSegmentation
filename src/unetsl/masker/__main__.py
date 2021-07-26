@@ -127,6 +127,6 @@ def main():
     masker()
 
 if __name__=="__main__":
-    t = threading.Thread(target=input_thread)
-    t.start()
+    #t = threading.Thread(target=input_thread)
+    #t.start()
     main()
