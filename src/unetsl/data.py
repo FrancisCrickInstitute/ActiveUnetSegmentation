@@ -11,8 +11,8 @@ import json
 import tensorflow
 from tensorflow import nn
 
-import keras
-from keras.utils import Sequence
+import tensorflow.keras as keras
+from tensorflow.keras.utils import Sequence
 
 import re
 
@@ -1079,11 +1079,11 @@ def splitIntoChannels(input_shape, image):
                 image = numpy.rollaxis(image, 4, 1)
             elif image.shape[-3]%channels == 0:
                 #input as (n, 1, c*z, y, x)
-                new_z = image.shape[-3]/channels
+                new_z = image.shape[-3]//channels
                 y = image.shape[-2]
                 x = image.shape[-1]
-                
-                image = numpy.reshape(image.shape[0], new_z, channels, y, x)
+                print( image.shape ,  (image.shape[0], new_z, channels, y, x) ) 
+                image = image.reshape(image.shape[0], new_z, channels, y, x)
                 image = numpy.rollaxis(image, 2, 1)
             else:
                 raise MalformedImageException(

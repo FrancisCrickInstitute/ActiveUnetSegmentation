@@ -255,7 +255,7 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
         return 0
     
     if gpus>1:
-        from keras.utils import multi_gpu_model
+        from tensorflow.keras.utils import multi_gpu_model
         model = multi_gpu_model(model, gpus=gpus)
         
     image, tags = unetsl.data.loadImage(config[unetsl.predict.IMG_KEY])
