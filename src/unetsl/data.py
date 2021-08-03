@@ -11,8 +11,8 @@ import json
 import tensorflow
 from tensorflow import nn
 
-import keras
-from keras.utils import Sequence
+import tensorflow.keras as keras
+from tensorflow.keras.utils import Sequence
 
 import re
 

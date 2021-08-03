@@ -220,7 +220,7 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
             unetsl.predict.OUT_KEY : output_image,
             unetsl.predict.DEBUG : False,
             unetsl.NORMALIZE_SAMPLES: False,
-            unetsl.BATCH_SIZE : 16,
+            unetsl.BATCH_SIZE : 4,
         }
     config.update(unetsl.config.parseExtendedOptions(extended_options))
     

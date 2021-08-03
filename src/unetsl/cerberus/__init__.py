@@ -379,8 +379,8 @@ def getOutputShapes(model):
             print(inp)
             s = []
             for dim in inp.shape:
-                if dim.value:
-                    s.append(dim.value)
+                if dim is not None:
+                    s.append(dim)
             
             ls.append(tuple(s))
         return ls
