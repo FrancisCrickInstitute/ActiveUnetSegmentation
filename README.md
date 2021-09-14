@@ -59,7 +59,7 @@ First use module to load the necessary modules.
 
 Create a conda environment with the relevant packages installed.
 
-    conda create --name unet-3d numpy scikit-image tensorflow-gpu=1.13.1 keras click    
+    conda create --name unet-3d numpy scikit-image=0.16.2 h5py=2.9.0 tensorflow-gpu=1.13.1 keras click    
 
 Once that is done, notice that it has installed all of the native libs, we can
 activate the environment.
