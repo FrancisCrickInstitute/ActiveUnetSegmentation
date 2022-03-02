@@ -39,8 +39,8 @@ def trainCerberusModel(config_file, gpus, batch):
     
     
     loss_fns = cerberus.getLossFunctions(train_cfg[unetsl.LOSS_FUNCTION])
-    input_file = train_cfg[unetsl.MODEL_FILE]
-    model_output_file = train_cfg[unetsl.MODEL_OUT]
+    input_file = config_file.replace(".json", "") + ".h5"
+    model_output_file = config_file.replace(".json", "") + ".h5"
     
     if pathlib.Path(input_file).exists():
         model = unetsl.model.loadModel(input_file)
@@ -134,6 +134,8 @@ def trainCerberusModel(config_file, gpus, batch):
 @click.option("-c", "config_file", prompt=True)
 def inspectCerberusDataSources(config_file):
     from unetsl.data import VolumeViewer
+    import matplotlib.pyplot
+    matplotlib.pyplot.ion()
     
     cfg = cerberus_config.loadConfig(config_file)
     data_sources = unetsl.data.getDataSources(cfg[unetsl.DATA_SOURCES], False)
@@ -321,10 +323,13 @@ def createCerberusCommand(config_file):
             head_configs= cfg["heads"]
         )
     
-    out = unet_cfg[unetsl.MODEL_FILE]
+    out = getModelFileFromJsonName(config_file)
     unetsl.model.saveModel(cerb_model, out)
     with open(config_file, 'w', encoding="utf8") as conf:
         json.dump(cfg, conf, indent="  ")
+
+def getModelFileFromJsonName( json_name ):
+    return json_name.replace(".json", "") + ".h5"
 
 @cerbs.command("attach")
 @click.option("-c", "config_file")

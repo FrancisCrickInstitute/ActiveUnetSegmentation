@@ -84,7 +84,7 @@ def getTrainingConfig(config):
         config = getDefaultCerberusConfig()
     
     if "training" not in config:
-        training_config = { unetsl.MODEL_FILE : config["unet"][unetsl.MODEL_FILE] } 
+        training_config = dict()
         training_config.update( unetsl.config.getDefaultTrainingConfig() )
         
         training_config[unetsl.LOSS_FUNCTION] = {}

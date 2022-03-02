@@ -24,9 +24,10 @@ import os.path
 
 import scipy.ndimage
 
+import matplotlib
+
 from matplotlib import pyplot
 from matplotlib.widgets import Slider
-
 
 """
 Data keys
@@ -425,7 +426,7 @@ class VolumeViewer:
         axrs = pyplot.axes([0.2, 0.05, 0.65, 0.05], facecolor="blue")
         self.slider = Slider(axrs, "Slice", 0, self.n_slices-1, valinit=self.slice, valstep=1)
         self.slider.on_changed(self.setSlice)
-        pyplot.show(False)
+        pyplot.show()
         
     def setData(self, data):
         self.data=data

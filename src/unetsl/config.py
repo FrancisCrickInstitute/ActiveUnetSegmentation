@@ -8,8 +8,6 @@ import json
 import pathlib
     
 
-MODEL_FILE = "model file"
-MODEL_OUT = "output file"
 INPUT_SHAPE = "input shape"
 KERNEL_SHAPE = "kernel shape"
 POOLING_SHAPE = "pooling"
@@ -29,7 +27,6 @@ DATA_SOURCES = "data sources"
 N_LABELS = "n labels"
 DEPTH = "depth"
 N_FILTERS = "n filters" #TODO sitch key name
-MODEL_FILE = "model file"
 ACTIVATION = "activation"
 CONDENSER = "condenser"
 VALIDATION_FRACTION = "validation fraction"
@@ -56,7 +53,6 @@ def parseExtendedOptions(extended_options):
 
 def getDefaultTrainingConfig():
     dc = {
-        MODEL_OUT: "default-model.h5", 
         LEARNING_RATE:0.000001,
         OPTIMIZER: "keras.optimizers.Adam",
         LOSS_FUNCTION:  "unetsl.model.sorensenDiceCoefLoss",
@@ -77,8 +73,7 @@ def getDefaultModelConfig():
             POOLING_SHAPE : (1, 2, 2),
             N_LABELS : 1,
             DEPTH : 3,
-            N_FILTERS : 32,
-            MODEL_FILE : "default-model.h5", 
+            N_FILTERS : 32, 
             ACTIVATION : "sigmoid",
             SPATIAL_DROPOUT_RATE : 0.0625
         }
