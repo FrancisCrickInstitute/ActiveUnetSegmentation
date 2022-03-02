@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 import numpy
-from skimage.external.tifffile import TiffWriter
+from tifffile import TiffWriter
 import sys
 
 import unetsl.cli_interface

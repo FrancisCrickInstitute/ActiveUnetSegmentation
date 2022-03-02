@@ -15,9 +15,9 @@ import tensorflow as tf
 import click
 
 
-def trainModel(config, n_gpus):
-    input_file = config[unetsl.MODEL_FILE]
-    model_output_file = config[unetsl.MODEL_OUT]
+def trainModel(config, n_gpus, base_name):
+    input_file = base_name
+    model_output_file = base_name
     if pathlib.Path(input_file).exists():
         model = unetsl.model.loadModel(input_file)
     else:
@@ -128,14 +128,8 @@ def main(config_file, batch, gpus, extended_options, allow_growth):
             config.save(config_file)
         else:
             return;
-    
-    if allow_growth:
-        sess_conf = tf.ConfigProto(gpu_options=tf.GPUOptions(allow_growth=True))
-    else:
-        sess_conf = tf.ConfigProto()
-    sess_conf.gpu_options.per_process_gpu_memory_fraction = 0.9
-    with tf.Session(config=sess_conf) as sess:
-        trainModel(config, gpus)
+    model_name = str(config_file).replace(".json", ".h5")
+    trainModel(config, gpus, model_name)
     
     
     

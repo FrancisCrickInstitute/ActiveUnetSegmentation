@@ -226,8 +226,8 @@ def getOutputShape(model, index = -1):
         shape = model.output.shape
         
     for dim in shape:
-        if dim.value:
-            s.append(dim.value)
+        if dim:
+            s.append(dim)
     return tuple(s)
 
 def getOutputMap(model):

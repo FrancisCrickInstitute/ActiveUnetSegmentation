@@ -4,7 +4,7 @@ setup(name='unetsl',
       version='0.1.0',
       packages=['unetsl', 'unetsl.scripts', 'unetsl.cerberus', "unetsl.masker", "unetsl.boxer"],
       #install_requires=["numpy==1.15.4", "scikit-image==0.14", "tensorflow==1.8", "keras", "urwid" ],
-      install_requires=["numpy", "scikit-image==0.16.1", "tensorflow-gpu==2.5", "urwid","click" ],
+      install_requires=["numpy", "scikit-image==0.18.3", "tensorflow-gpu==2.5", "urwid","click" ],
       entry_points={
           'console_scripts': [
               'create_model = unetsl.scripts.create_model:main',
