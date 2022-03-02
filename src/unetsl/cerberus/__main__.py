@@ -10,6 +10,9 @@ import unetsl.cerberus as cerberus
 import unetsl.cerberus.cerberus_config as cerberus_config
 import unetsl.cli_interface as client
 
+#the new multi-gpu support
+from tensorflow.distribute import MirroredStrategy
+
 import numpy
 
 import unetsl
@@ -79,56 +82,91 @@ def trainCerberusModel(config_file, gpus, batch):
     training_batches = training_generator.getNBatches()
     validation_batches = validation_generator.getNBatches()
 
-    run_id = int(time.time()*1000)
+    session = MirroredStrategy()
+    with session.scope():
+        if pathlib.Path(input_file).exists():
+            model = unetsl.model.loadModel(input_file)
+        else:
+            click.echo("model first needs to be created, %s does not exist"%input_file)
+            return
+        head_configs = cfg["heads"]
+        input_shape = cfg["unet"][unetsl.INPUT_SHAPE]
+        pool_shape = cfg["unet"][unetsl.POOLING_SHAPE]
+        heads = cerberus.loadHeads(head_configs, input_shape, pool_shape)
+        
+        output_shapes = cerberus.getOutputShapes(model)
+        
+        click.echo("%d model outputs"%(len(output_shapes)))
+        for ops in output_shapes:
+            click.echo("\t %s"%(ops, ))
+        input_shapes = cerberus.getInputShapes(model)
+        input_shape = input_shapes[-1]
+        
+        pool = unet_cfg[unetsl.POOLING_SHAPE]
+        
+        data_sources = unetsl.data.getDataSources(
+                cfg[unetsl.DATA_SOURCES], 
+                normalize_samples=train_cfg[unetsl.NORMALIZE_SAMPLES]
+                )
+        patch_size = input_shape
+        stride = train_cfg[unetsl.STRIDE]
+        batch_size = train_cfg[unetsl.BATCH_SIZE]
+        validation_split = train_cfg[unetsl.VALIDATION_FRACTION]
+        
+        training_generator, validation_generator = unetsl.cerberus.getDataGenerators(
+                data_sources, patch_size, stride, batch_size, validation_split, heads
+                )
 
-    base = pathlib.Path(model_output_file).name.replace(".h5", "")
-    e_filename = "training-log_%s-%08x.txt"%(base, run_id)
-    b_filename = "batch-log_%s-%08x.txt"%(base, run_id)
+        training_batches = training_generator.getNBatches()
+        validation_batches = validation_generator.getNBatches()
 
-    efile = pathlib.Path(e_filename)
-    bfile = pathlib.Path(b_filename)
+        run_id = int(time.time()*1000)
 
-    while efile.exists() or bfile.exists():
-        run_id += 1
+        base = pathlib.Path(model_output_file).name.replace(".h5", "")
         e_filename = "training-log_%s-%08x.txt"%(base, run_id)
         b_filename = "batch-log_%s-%08x.txt"%(base, run_id)
+
         efile = pathlib.Path(e_filename)
         bfile = pathlib.Path(b_filename)
-    
-    
-    logger = unetsl.model.LightLog(model_output_file, model, filename = str(efile))
-    tc = str(logger.file).replace(".txt", ".json")
-    batch_logger = unetsl.model.BatchLog(model_output_file, model, filename = str(bfile))
-    
-    click.echo("# training log %s \n#batch log %s \n#config log %s"%(e_filename, b_filename, tc))
-    
-    cerberus_config.saveConfig(cfg, pathlib.Path(tc))
-    
-    lr = train_cfg[unetsl.LEARNING_RATE]
-    
-    optimizer = unetsl.model.getOptimizer(train_cfg[unetsl.OPTIMIZER], lr)
-    
-    click.echo("validation total: %s train total: %s"%(validation_batches, training_batches ))
-    
-    if train_cfg[unetsl.MULTI_GPU] and gpus>1:
-        from tensorflow.keras.utils import multi_gpu_model
-        model = multi_gpu_model(model, gpus=gpus)
-    
-    model.compile(            
-            optimizer=optimizer, 
-            loss=loss_fns,
-            metrics=['binary_accuracy', 'accuracy'], 
-            loss_weights=train_cfg["loss weights"]
-        )
-    
-    model.fit( (( x , y ) for (x,y) in training_generator),
-                        steps_per_epoch=training_batches,
-                        epochs=train_cfg[unetsl.EPOCHS],
-                        validation_data=( (x,y) for (x,y) in validation_generator ),
-                        validation_steps=validation_batches,
-                        callbacks=[logger, batch_logger], 
-                        verbose=2
-                        )
+
+        while efile.exists() or bfile.exists():
+            run_id += 1
+            e_filename = "training-log_%s-%08x.txt"%(base, run_id)
+            b_filename = "batch-log_%s-%08x.txt"%(base, run_id)
+            efile = pathlib.Path(e_filename)
+            bfile = pathlib.Path(b_filename)
+        
+        
+        logger = unetsl.model.LightLog(model_output_file, model, filename = str(efile))
+        tc = str(logger.file).replace(".txt", ".json")
+        batch_logger = unetsl.model.BatchLog(model_output_file, model, filename = str(bfile))
+        
+        click.echo("# training log %s \n#batch log %s \n#config log %s"%(e_filename, b_filename, tc))
+        
+        cerberus_config.saveConfig(cfg, pathlib.Path(tc))
+        
+        lr = train_cfg[unetsl.LEARNING_RATE]
+        
+        optimizer = unetsl.model.getOptimizer(train_cfg[unetsl.OPTIMIZER], lr)
+        
+        click.echo("validation total: %s train total: %s"%(validation_batches, training_batches ))
+        
+        
+        model.compile(            
+                optimizer=optimizer, 
+                loss=loss_fns,
+                metrics=['binary_accuracy', 'accuracy'], 
+                loss_weights=train_cfg["loss weights"]
+            )
+        
+        model.fit( (( x , y ) for (x,y) in training_generator),
+                            steps_per_epoch=training_batches,
+                            epochs=train_cfg[unetsl.EPOCHS],
+                            validation_data=( (x,y) for (x,y) in validation_generator ),
+                            validation_steps=validation_batches,
+                            callbacks=[logger, batch_logger], 
+                            verbose=2
+                            )
 
 @cerbs.command("inspect")
 @click.option("-c", "config_file", prompt=True)
@@ -233,62 +271,61 @@ def predictionCommand(model_file, input_image, output_image, batch, extended_opt
             #cancelled
             return 0
     
-    model = unetsl.model.loadModel(config[unetsl.predict.MODEL_KEY])
+    strategy = MirroredStrategy();
     
-    output_map = unetsl.model.getOutputMap(model)
-    
-    rtm = {}
-    sm = {}
-    
-    for key in output_map:
-        rtm[key] = guessReductionType(key, output_map[key])
-    for key in output_map:
-        sm[key] = guessShaper(key, output_map[key])
-    
-    tune_config = {
-        unetsl.predict.REDUCTION_TYPE : rtm,
-        unetsl.predict.LAYER_SHAPER : sm
-    }
-    
-    if batch:
-        pass
-    elif not unetsl.cli_interface.configure(tune_config):
-        #cancelled
-        return 0
-    
-    if gpus>1:
-        from tensorflow.keras.utils import multi_gpu_model
-        model = multi_gpu_model(model, gpus=gpus)
+    with strategy.scope():
+        model = unetsl.model.loadModel(config[unetsl.predict.MODEL_KEY])
         
-    image, tags = unetsl.data.loadImage(config[unetsl.predict.IMG_KEY])
-    print(image.shape)
-    sample_normalize = config[unetsl.NORMALIZE_SAMPLES]
-    
-    predictor = unetsl.predict.MultiChannelPredictor(model, image)
-    
-    rtm = tune_config[unetsl.predict.REDUCTION_TYPE]
-    predictor.reduction_types = tuple( rtm[key] for key in rtm )
-    
-    lsm = tune_config[unetsl.predict.LAYER_SHAPER]
-    
-    predictor.layer_shapers = tuple( unetsl.predict.getShaper( lsm[key] ) for key in lsm)
-    predictor.batch_size = config[unetsl.BATCH_SIZE]
-    predictor.debug = config[unetsl.predict.DEBUG]
-    predictor.sample_normalize = config[unetsl.NORMALIZE_SAMPLES] 
-    predictor.batch_size = config[unetsl.BATCH_SIZE]
-    predictor.GPUS = gpus
-    
-    out, debug = predictor.predict()
-    print("out shape: ", out.shape )
-    if config[unetsl.predict.DEBUG]:
-        print("debug shape: ", debug.shape)
-    unetsl.data.saveImage(config[unetsl.predict.OUT_KEY], out, tags)
-    
-    if config[unetsl.predict.DEBUG]:
-        click.echo("saving debug data as debug.tif")
-        unetsl.data.saveImage("debug.tif", debug, tags)
-    
-    click.echo("finished cerberus prediction!")
+        output_map = unetsl.model.getOutputMap(model)
+        
+        rtm = {}
+        sm = {}
+        
+        for key in output_map:
+            rtm[key] = guessReductionType(key, output_map[key])
+        for key in output_map:
+            sm[key] = guessShaper(key, output_map[key])
+        
+        tune_config = {
+            unetsl.predict.REDUCTION_TYPE : rtm,
+            unetsl.predict.LAYER_SHAPER : sm
+        }
+        
+        if batch:
+            pass
+        elif not unetsl.cli_interface.configure(tune_config):
+            #cancelled
+            return 0
+            
+        image, tags = unetsl.data.loadImage(config[unetsl.predict.IMG_KEY])
+        print(image.shape)
+        sample_normalize = config[unetsl.NORMALIZE_SAMPLES]
+        
+        predictor = unetsl.predict.MultiChannelPredictor(model, image)
+        
+        rtm = tune_config[unetsl.predict.REDUCTION_TYPE]
+        predictor.reduction_types = tuple( rtm[key] for key in rtm )
+        
+        lsm = tune_config[unetsl.predict.LAYER_SHAPER]
+        
+        predictor.layer_shapers = tuple( unetsl.predict.getShaper( lsm[key] ) for key in lsm)
+        predictor.batch_size = config[unetsl.BATCH_SIZE]
+        predictor.debug = config[unetsl.predict.DEBUG]
+        predictor.sample_normalize = config[unetsl.NORMALIZE_SAMPLES] 
+        predictor.batch_size = config[unetsl.BATCH_SIZE]
+        predictor.GPUS = gpus
+        
+        out, debug = predictor.predict()
+        print("out shape: ", out.shape )
+        if config[unetsl.predict.DEBUG]:
+            print("debug shape: ", debug.shape)
+        unetsl.data.saveImage(config[unetsl.predict.OUT_KEY], out, tags)
+        
+        if config[unetsl.predict.DEBUG]:
+            click.echo("saving debug data as debug.tif")
+            unetsl.data.saveImage("debug.tif", debug, tags)
+        
+        click.echo("finished cerberus prediction!")
 
 @cerbs.command("create")
 @click.option("-c", "config_file", prompt=True)
