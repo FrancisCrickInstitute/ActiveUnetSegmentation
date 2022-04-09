@@ -406,7 +406,7 @@ class VolumeViewer:
         self.figure = pyplot.figure(self.figure_no)
         m,n = get_dims(self.channels)
         for c in range(self.channels):
-            self.figure.add_subplot(m, n, (c+1) )
+            self.figure.add_subplot(int(m), int(n), int((c+1)) )
             slc = self.data[c, self.slice]
             mx = numpy.max(slc)
             mn = numpy.min(slc)
@@ -1072,6 +1072,7 @@ def splitIntoChannels(input_shape, image):
         print("5 dim format, assuming [n, c, z, y, x] %s"%str(image.shape))
         if image.shape[1]!=input_shape[0]:
             print("\t\t[WARNING] updating geometry")
+            print("\t This can be due to wrong input channel number.")
             if image.shape[-1] == channels:
                 #input as channels last (n, z, y, x, c) 
                 image = numpy.rollaxis(image, 4, 1)

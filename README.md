@@ -2,9 +2,10 @@
 
 For segmenting images using unet. Essentially a pixelwise classifier.
 
-We title it active because currently we use it in conjunction with active 
-contours for both creating training data and segmenting the resulting 
-network predictions.
+We title it active because currently we use it in conjunction with 
+[active contours](https://franciscrickinstitute.github.io/dm3d-pages/) 
+for both creating training data and segmenting the resulting network 
+predictions.
 
 ## Installing
 
@@ -29,27 +30,24 @@ Then run the associtate pip on to the src folder that contains `setup.py`.
 
     unet-env/bin/pip install ActiveUnetSegmentation/src
     
-This will install dependencies , but it will not include native libraries.
+**I've removed the tensorflow dependencies but they need to be installed.**
+
+To use with a GPU you will need to install CUDA and CuDNN. 
+[Tensorflows Tested Build Configs](https://www.tensorflow.org/install/source)
+are a good way to check which versions of cuda and cudnn you'd need for
+a specific tensorflow pip package.
+
 
 ### Installing for use with CUDA.
 
 It is important that the cuda version matches the cuda version used with
-tensorflow. 
+tensorflow package that is installed. 
 
-    python -m venv unet-cuda-env
-    unet-cuda-env/bin/pip install tensorflow-gpu==1.13.1 keras scikit-image numpy urwid click
+    python -m venv unet-env
+    unet-env/bin/pip install --upgrade pip
+    unet-cuda-env/bin/pip install tensorflow==2.4 keras scikit-image numpy urwid click
     
-**Tensorflow 1.13 has worked on cuda 10.0 and works with multigpu**
-
-The environment will be prepared, and the package can be installed as before,
-but the dependencies will already be met. Then the corresponding cuda libraries
-will need to be setup. 
-
-    ml CUDA/10.0.130 cuDNN/7.5.0.56-CUDA-10.0.130
-
-This should work with a system using module load, an alternative is the 
-point LD_LIBRARY_PATH at the folders with the cuda+cudnn .so files, but the 
-location of these is very system and version specific.
+**Tensorflow 2.4 has worked on cuda 11.1 and CuDNN 8.0 and works with multigpu**
 
 ### Using Anaconda.
 
@@ -59,10 +57,10 @@ First use module to load the necessary modules.
 
 Create a conda environment with the relevant packages installed.
 
-    conda create --name unet-3d numpy scikit-image=0.16.2 h5py=2.9.0 tensorflow-gpu=1.13.1 keras click    
+    conda create --name unet-3d scikit-image=0.16.2 tensorflow-gpu=2.4 click    
 
-Once that is done, notice that it has installed all of the native libs, we can
-activate the environment.
+Once that is done, notice that it has installed all of the native libs, 
+CUDA toolkit, cuDNN and CUPTI we can activate the environment.
 
     conda activate unet-3d
 
@@ -78,6 +76,17 @@ everything doesn't get re-installed.
     
 That should install two new packagse in the venv, the unet library and urwid.
 
+## Testing
+
+In the bootstrap folder are two scripts, one has all of the necessary
+commands to create the cerberus model. A unet with 3 outputs at 
+a specified resolution (the depth).
+
+You will need to create training data to do the training. That can be done
+using our (active contours fiji plugin)[https://franciscrickinstitute.github.io/dm3d-pages/#generate-labels]
+
+
+
 ## Data
 
 The data requires a paired set of images. An input image and an output image.
@@ -85,6 +94,10 @@ The easiest way to get started is to create a folder where you want to work
 and create the folders, 'images' and 'labels'. Then put the input images in
 image and corresponding label image in the folder labels with the same name.
 They don't have to have the same name.
+
+One way to generate image/label image pairs is to use our active 
+contours (active contours fiji plugin)[https://franciscrickinstitute.github.io/dm3d-pages/#generate-labels]
+
 
 ### Input
 
@@ -135,7 +148,9 @@ Combinations can be used for overlapping labels.
 and a single channel of output.
 
 These Do not change the output so they can work with float pixels or integer type pixels. We use this type of labelling
-with the distance transform. Linear labl
+with the distance transform. 
+
+**The cerberus model always requires the Linear Labels**
 
 
 
