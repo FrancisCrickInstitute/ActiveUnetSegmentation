@@ -96,7 +96,9 @@ DEFAULT_REDUCTION_TYPES = {
         }
 def guessReduction(output):
     try:
-        return DEFAULT_REDUCTION_TYPES[output.op.type]
+        for key in DEFAULT_REDUCTION_TYPES:
+            if key in output.name:
+                return DEFAULT_REDUCTION_TYPES[key]
     except:
         pass
     return MULTICLASS_REDUCTION

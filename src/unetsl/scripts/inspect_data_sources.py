@@ -51,8 +51,8 @@ class PredictionGenerator:
 def displayLayerOutput(config_file, layer_number):
     config = unetsl.config.getDefaultConfigurationTool()
     config.load(config_file)
-    
-    model = unetsl.model.loadModel(config[unetsl.MODEL_FILE])
+    model_name = str(config_file).replace(".json", ".h5");
+    model = unetsl.model.loadModel(model_name)
     source_configs = config[unetsl.DATA_SOURCES]
     if layer_number==-1:
         for i, j in enumerate(model.layers):
@@ -127,7 +127,8 @@ def showDataSources(config_file):
     #running
     config = unetsl.config.getDefaultConfigurationTool()
     config.load(config_file)
-    model = unetsl.model.loadModel(config[unetsl.MODEL_FILE])
+    model_name = str(config_file).replace(".json", ".h5")
+    model = unetsl.model.loadModel(model_name)
     source_configs = config[unetsl.DATA_SOURCES]
     
     input_shape = unetsl.model.getInputShape(model)

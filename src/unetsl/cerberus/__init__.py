@@ -138,6 +138,54 @@ class CropResize:
         highs = tuple(l + s for l, s in zip(lows, span))
         return tuple(slice(l, h) for l, h in zip(lows, highs) )
     
+class ShuffleResize:
+    """
+        Resize operation by cropping them image.
+    """
+    def __init__(self, input_shape, depth=None, pool=None, offset = None):
+        zm = len(pool)
+        self.view = tuple( i // p**depth for i, p in zip(input_shape[-zm:], pool) )
+        print(self.view, input_shape)
+        self.input_shape = input_shape
+        self.axis_factor = 4
+        self.channels = 16
+    def toDataInputSize(self, chunk):
+        """
+            Crops the supplied chunk down to the .view dimensions. 
+        """
+        print(chunk.shape);
+        op = numpy.zeros(self.input_shape, dtype=chunk.dtype)
+        for i in range(self.channels):
+            slc = self.getSliceAtN(i, op)
+            op[slc] = chunk[i]
+        return op
+                
+    def toModelOutputSize(self, chunk):
+        """
+            For transforming the input segmentations/training data to the 
+            correct size for the model
+        """
+        arr = []
+        print(chunk.shape)
+        for i in range(self.channels):
+            slc = self.getSliceForChunk(i, chunk)
+            arr.append(chunk[slc])
+            
+        return numpy.array(arr)
+    
+    def getSliceForChunk(self, index, arr):
+        dims = len(arr.shape)
+        pls = len(self.view)
+        full = dims - pls
+        xoffset = index%self.axis_factor
+        yoffset = index//self.axis_factor
+        
+        lows =  [0, 0, 0, xoffset*self.view[-2], yoffset*self.view[-1]]
+        span = arr.shape[:full] + self.view 
+        highs = tuple(l + s for l, s in zip(lows, span))
+        print(lows, highs)
+        return tuple(slice(l, h) for l, h in zip(lows, highs) )
+    
 class RegionCropResize(CropResize):
     def __init__(self, input_shape, depth=None, pool=None, offset = None):
         super().__init__(input_shape, depth, pool, offset)
@@ -170,7 +218,8 @@ RESAMPLER_MAP = {
         "max pool" : MaxPoolResize,
         "min pool" : MinPoolResize,
         "crop" : CropResize,
-        "region crop" : RegionCropResize
+        "region crop" : RegionCropResize,
+        "shuffle" : ShuffleResize
     }
     
 class CerberusDataGenerator:
@@ -379,8 +428,8 @@ def getOutputShapes(model):
             print(inp)
             s = []
             for dim in inp.shape:
-                if dim.value:
-                    s.append(dim.value)
+                if dim is not None:
+                    s.append(dim)
             
             ls.append(tuple(s))
         return ls

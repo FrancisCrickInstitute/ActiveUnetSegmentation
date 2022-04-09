@@ -1,6 +1,7 @@
 import numpy
 
-from skimage.external.tifffile import TiffFile, TiffWriter
+#from skimage.external.tifffile import TiffFile, TiffWriter
+from tifffile import TiffFile, TiffWriter
 import skimage.io
 import skimage.morphology
 import skimage.transform
@@ -24,9 +25,10 @@ import os.path
 
 import scipy.ndimage
 
+import matplotlib
+
 from matplotlib import pyplot
 from matplotlib.widgets import Slider
-
 
 """
 Data keys
@@ -425,7 +427,7 @@ class VolumeViewer:
         axrs = pyplot.axes([0.2, 0.05, 0.65, 0.05], facecolor="blue")
         self.slider = Slider(axrs, "Slice", 0, self.n_slices-1, valinit=self.slice, valstep=1)
         self.slider.on_changed(self.setSlice)
-        pyplot.show(False)
+        pyplot.show()
         
     def setData(self, data):
         self.data=data
@@ -897,15 +899,11 @@ def getImageJCalibration(img, tags = None):
             returns tags, or a new dictionary if tags omitted or None.
     """
     if tags is None:
-        tags = {}
-    info_string = img.info()
+        tags = img.imagej_metadata
+    else:
+        for key in img.imagej_metadata:
+            tags[key] = img.imagej_metadata[key]
     
-    fields = [item for item in info_string.split("\n") if item.find("*")>=0]
-    for field in fields:
-        k, v = parseField(field)
-        if k:
-            tags[k] = v
-        
     return tags
     
     
@@ -939,9 +937,9 @@ def loadImage(imageFile, swap_2d_time_series=True):
                 data.append(p.asarray())
             data = numpy.array(data)
             if tiff.is_imagej:
-                if tiff.is_rgb:
-                    print("warning: RGB LUT detected, summing along last axis!")
-                    data = numpy.sum(data, axis=-1)
+                #if tiff.is_rgb:
+                #    print("warning: RGB LUT detected, summing along last axis!")
+                #    data = numpy.sum(data, axis=-1)
                 getImageJCalibration(tiff, tags)
                 frames = tags.get("frames", 1)
                 slices = tags.get("slices", 1)

@@ -48,7 +48,8 @@ def main(config_file, extended_options, batch):
             activation_name=config[unetsl.ACTIVATION],
             spatial_dropout_rate=config[unetsl.SPATIAL_DROPOUT_RATE]
         )
-    model.save(config[unetsl.MODEL_FILE]);
+    model_file=config_file.replace(".json", ".h5")
+    model.save(model_file);
 
 if __name__=="__main__":
     main()

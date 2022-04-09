@@ -51,8 +51,8 @@ def sorensenDiceCoefLoss(y_exp, y_pred):
         -2*(T*P + 1)/(1 + |T| + |P|)
         The 1 is a smoothing term.
     """
-    y_exp_f = K.flatten(y_exp)
-    y_pred_f = K.flatten(y_pred)
+    y_exp_f = tensorflow.cast(K.flatten(y_exp), "float32")
+    y_pred_f = K.flatten(y_pred*1.0)
     return - 2*(K.sum(y_exp_f*y_pred_f)+ 1)/(1 + K.sum(y_exp_f) + K.sum(y_pred_f))
 
 
@@ -174,7 +174,7 @@ def saveModel(model, filepath):
         because keras decided to stop supporting pathlib.Path
         
     """
-    model.save(str(filepath))
+    model.save(str(filepath), save_format="h5")
 
 
 def loadModel(model_file):
@@ -206,8 +206,8 @@ def getInputShape(model):
     """
     s = []
     for dim in model.input.shape:
-        if dim.value:
-            s.append(dim.value)
+        if dim:
+            s.append(dim)
         
     return tuple(s)
 
@@ -226,8 +226,8 @@ def getOutputShape(model, index = -1):
         shape = model.output.shape
         
     for dim in shape:
-        if dim.value:
-            s.append(dim.value)
+        if dim:
+            s.append(dim)
     return tuple(s)
 
 def getOutputMap(model):
@@ -454,7 +454,12 @@ class DefaultLogger:
         pass
     def on_test_end(self, *args, **kwargs):
         pass
-    
+    def _implements_train_batch_hooks(self, *args, **kwargs):
+	    return True
+    def _implements_test_batch_hooks(self, *args, **kwargs):
+        return False
+    def _implements_predict_batch_hooks(self, *args, **kwargs):
+        return False
 
 class LightLog(DefaultLogger):
     """
@@ -520,8 +525,8 @@ class LightLog(DefaultLogger):
         saveModel(self.model, pathlib.Path(self.latest))
     def set_model(self, model):
         #self.model = model
-        for weight in model.weights:
-            self.log("#%s\n"%weight)
+        #for weight in model.weights:
+        #    self.log("#%s\n"%weight)
         self.log("#input: %s\n"%model.input)
         self.log("#output: %s\n"%model.output)
         self.log("#optimiser: %s\n"%model.optimizer)
@@ -552,6 +557,7 @@ class BatchLog(DefaultLogger):
         if self.batch_no>BatchLog.monitor_steps:
             return;
         if self.header==None:
+            batch_no = -1
             self.keys=[key for key in parameters]
             self.keys.sort()
             self.header = "#%s\t%s\n"%("batch_number", "\t".join("%d.%s"%(i+2, key) for i, key in enumerate(self.keys)))
@@ -570,8 +576,8 @@ class BatchLog(DefaultLogger):
         self.rotateLog()
     def set_model(self, model):
         #self.model = model
-        for weight in model.weights:
-            self.log("#%s\n"%weight)
+        #for weight in model.weights:
+        #    self.log("#%s\n"%weight)
         self.log("#input: %s\n"%model.input)
         self.log("#output: %s\n"%model.output)
         self.log("#optimiser: %s\n"%model.optimizer)
@@ -584,6 +590,7 @@ class BatchLog(DefaultLogger):
         if(self.log_step%BatchLog.rotation_steps==0):
             self.file.rename(self.filename.replace(".txt", "_%05d.txt"%self.log_step))
             self.file = pathlib.Path(self.filename)
+
 
 class EpochPredictions(DefaultLogger):
     def __init__(self, samples, base_name, model, prediction_folder = "predictions", sample_normalize = False, reduction_type=1, n_gpus=1):
