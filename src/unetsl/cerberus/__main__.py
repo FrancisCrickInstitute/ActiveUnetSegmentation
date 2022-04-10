@@ -11,7 +11,8 @@ import unetsl.cerberus.cerberus_config as cerberus_config
 import unetsl.cli_interface as client
 
 #the new multi-gpu support
-from tensorflow.distribute import MirroredStrategy
+import tensorflow.distribute as tfd
+MirroredStrategy = tfd.MirroredStrategy
 
 import numpy
 
