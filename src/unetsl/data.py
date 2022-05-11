@@ -898,6 +898,9 @@ def getImageJCalibration(img, tags = None):
         Return:
             returns tags, or a new dictionary if tags omitted or None.
     """
+    
+    
+    
     if tags is None:
         tags = img.imagej_metadata
     else:
@@ -906,7 +909,16 @@ def getImageJCalibration(img, tags = None):
     
     return tags
     
-    
+def getGenericCalibrations( image, tags):
+    """
+        FIXME: the xy resolution tags are not in this version of tifffile!?
+    """
+    ttags= image.pages.get(0).tags
+    for tag in ttags:
+        if tag.name == "XResolution":
+            tags["x_resolution"] = tag.value[0]/tag.value[1]
+        if tag.name == "YResolution":
+            tags["y_resolution"] = tag.value[0]/tag.value[1]
 
 def loadImage(imageFile, swap_2d_time_series=True):
     """
@@ -940,6 +952,7 @@ def loadImage(imageFile, swap_2d_time_series=True):
                 #if tiff.is_rgb:
                 #    print("warning: RGB LUT detected, summing along last axis!")
                 #    data = numpy.sum(data, axis=-1)
+                getGenericCalibrations(tiff, tags)
                 getImageJCalibration(tiff, tags)
                 frames = tags.get("frames", 1)
                 slices = tags.get("slices", 1)
