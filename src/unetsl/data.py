@@ -560,7 +560,7 @@ def getLinearLabels(data, n_labels):
     :return: numpy array of shape: (n_samples, n_labels, ...)
     """
     new_shape = [1] + list(data.shape)
-    y = numpy.zeros(new_shape, numpy.int8)
+    y = numpy.zeros(new_shape, data.dtype)
     y[0] = data*1
     return y
 

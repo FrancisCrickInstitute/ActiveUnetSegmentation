@@ -174,8 +174,12 @@ def saveModel(model, filepath):
         because keras decided to stop supporting pathlib.Path
         
     """
-    model.save(str(filepath), save_format="h5")
-
+    spath = str(filepath)
+    ext = spath[-2:]
+    if "h5" == ext:
+        model.save(spath, save_format="h5")
+    else:
+        model.save(spath)
 
 def loadModel(model_file):
     """
